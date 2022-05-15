@@ -7,6 +7,7 @@
 # 00000 Nome2
 
 import sys
+import numpy as np
 from search import (
     Problem,
     Node,
@@ -34,23 +35,23 @@ class TakuzuState:
 
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
+    def __init__(self, board):
+        """Construtor da classe.""" 
+        self.board = board
 
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
-        # TODO
-        pass
+        return self.board[row , col]
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
-        # TODO
-        pass
+        return (self.board[col - 1], self.board[col + 1])
 
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
-        # TODO
-        pass
+        return (self.board[row - 1], self.board[row + 1])
 
     @staticmethod
     def parse_instance_from_stdin():
@@ -63,11 +64,17 @@ class Board:
             > from sys import stdin
             > stdin.readline()
         """
-        # TODO
-        pass
+
+        input = sys.stdin.readlines()[1:]
+        for idx, x in enumerate(input):
+            x = x[0:len(x)-1]
+            list_line = x.split('\t')
+            list_line = [int(i) for i in list_line]
+            input[idx] = list_line
+        board = np.array(input) 
+        return Board(board)
 
     # TODO: outros metodos da classe
-
 
 class Takuzu(Problem):
     def __init__(self, board: Board):
@@ -106,8 +113,7 @@ class Takuzu(Problem):
 
 if __name__ == "__main__":
     # TODO:
-    # Ler o ficheiro do standard input,
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
-    pass
+    board = Board.parse_instance_from_stdin()
