@@ -36,8 +36,16 @@ class TakuzuState:
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
     def __init__(self, board):
-        """Construtor da classe.""" 
         self.board = board
+
+    def __str__(self):
+        """Devolve a representação do tabuleiro."""
+        string = ""
+        for row in self.board:
+            for col in row:
+                string += str(col) + " "
+            string += "\n"
+        return string
 
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
@@ -46,12 +54,18 @@ class Board:
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
-        return (self.board[col - 1], self.board[col + 1])
+        #TODO
+        pass
 
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
-        return (self.board[row - 1], self.board[row + 1])
+        #TODO
+        pass
+
+    def transpose(self):
+        """Devolve a transposição do tabuleiro."""
+        return np.transpose(self.board)
 
     @staticmethod
     def parse_instance_from_stdin():
@@ -110,10 +124,20 @@ class Takuzu(Problem):
 
     # TODO: outros metodos da classe
 
+# APAGR!!! hahahahahahah
+def test1():    
+    board = Board.parse_instance_from_stdin()
+    print("Initial:\n", board, sep="")  
+    # Imprimir valores adjacentes
+    print(board.adjacent_vertical_numbers(3, 3))
+    print(board.adjacent_horizontal_numbers(3, 3))
+    print(board.adjacent_vertical_numbers(1, 1))
+    print(board.adjacent_horizontal_numbers(1, 1))
 
 if __name__ == "__main__":
     # TODO:
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
-    board = Board.parse_instance_from_stdin()
+    test1()
+
