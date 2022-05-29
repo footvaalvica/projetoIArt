@@ -274,8 +274,5 @@ if __name__ == "__main__":
     #!! nao mexas aqui por enquanto xD
     board = Board.parse_instance_from_stdin()
 
-    #isto é para correr os testes
-    # # Test(board)
-
-    # isto corre os testes sem debug (diz só se está certo ou nao)
-    Test(board, False)
+    # correr tests
+    Test(board)
