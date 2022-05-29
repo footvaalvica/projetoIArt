@@ -159,6 +159,7 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
     test4out = """Is goal? True
 Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
+    # cores
     @staticmethod
     def prGreen(prt):
         print("\033[92m{}\033[00m".format(prt))
@@ -171,19 +172,13 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
     def prRed(prt):
         print("\033[91m{}\033[00m".format(prt))
 
-    def __init__(self, board: Board, debug: bool = True):
+    def __init__(self, board: Board):
         """Construtor da classe Test."""
         self.test1(board)
         # # self.test2(board)
         # # self.test3(board)
         # # self.test4(board)
 
-        if debug:
-            Test.prCyan("Debug")
-            self.test1debug(board)
-            # # self.test2debug(board)
-            # # self.test3debug(board)
-            # # self.test4debug(board)
     
     @staticmethod
     def test1(board: Board):
@@ -202,15 +197,6 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
             print(testOutput)
 
     @staticmethod
-    def test1debug(board: Board):
-        print("Initial:\n", board, sep="")  
-        # Imprimir valores adjacentes
-        print(board.adjacent_vertical_numbers(3, 3))
-        print(board.adjacent_horizontal_numbers(3, 3))
-        print(board.adjacent_vertical_numbers(1, 1))
-        print(board.adjacent_horizontal_numbers(1, 1))
-
-    @staticmethod
     def test2(board: Board):
         testOutput = ""
         testOutput.append("Initial:\n", board, sep="")
@@ -227,20 +213,10 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
         if testOutput == Test.test2out:
             Test.prGreen("Nice!\n")
-
-    @staticmethod
-    def test2debug(board: Board):
-        print("Initial:\n", board, sep="")
-        # Criar uma instância de Takuzu:
-        problem = Takuzu(board)
-        # Criar um estado com a configuração inicial:
-        initial_state = TakuzuState(board)
-        # Mostrar valor na posição (2, 2):
-        print(initial_state.board.get_number(2, 2))
-        # Realizar acção de inserir o número 1 na posição linha 2 e coluna 2
-        result_state = problem.result(initial_state, (2, 2, 1))
-        # Mostrar valor na posição (2, 2):
-        print(result_state.board.get_number(2, 2))
+        else:
+            Test.prRed("Wrong!\n")
+            Test.prCyan(Test.test2out)
+            print(testOutput)
 
     @staticmethod
     def test3(board: Board):
@@ -266,27 +242,10 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
         if testOutput == Test.test3out:
             Test.prGreen("Nice!\n")
-
-    @staticmethod
-    def test3debug(board: Board):
-        # Criar uma instância de Takuzu:
-        problem = Takuzu(board)
-        # Criar um estado com a configuração inicial:
-        s0 = TakuzuState(board)
-        print("Initial:\n", s0.board, sep="")
-        # Aplicar as ações que resolvem a instância
-        s1 = problem.result(s0, (0, 0, 0))
-        s2 = problem.result(s1, (0, 2, 1))
-        s3 = problem.result(s2, (1, 0, 1))
-        s4 = problem.result(s3, (1, 1, 0))
-        s5 = problem.result(s4, (1, 3, 1))
-        s6 = problem.result(s5, (2, 0, 0))
-        s7 = problem.result(s6, (2, 2, 1))
-        s8 = problem.result(s7, (2, 3, 1))
-        s9 = problem.result(s8, (3, 2, 0))
-        # Verificar se foi atingida a solução
-        print("Is goal?", problem.goal_test(s9))
-        print("Solution:\n", s9.board, sep="")
+        else:
+            Test.prRed("Wrong!\n")
+            Test.prCyan(Test.test3out)
+            print(testOutput)
     
     @staticmethod
     def test4(board: Board):
@@ -301,16 +260,10 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
         if testOutput == Test.test4out:
             Test.prGreen("Nice!\n")
-
-    @staticmethod
-    def test4debug(board: Board):
-        # Criar uma instância de Takuzu:
-        problem = Takuzu(board)
-        # Obter o nó solução usando a procura em profundidade:
-        goal_node = depth_first_tree_search(problem)
-        # Verificar se foi atingida a solução
-        print("Is goal?", problem.goal_test(goal_node.state))
-        print("Solution:\n", goal_node.state.board, sep="")
+        else:
+            Test.prRed("Wrong!\n")
+            Test.prCyan(Test.test4out)
+            print(testOutput)
 
 if __name__ == "__main__":
     # TODO:
