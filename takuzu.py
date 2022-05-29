@@ -125,19 +125,42 @@ class Takuzu(Problem):
     # TODO: outros metodos da classe
 
 # APAGR!!! hahahahahahah
-def test1():    
-    board = Board.parse_instance_from_stdin()
-    print("Initial:\n", board, sep="")  
-    # Imprimir valores adjacentes
-    print(board.adjacent_vertical_numbers(3, 3))
-    print(board.adjacent_horizontal_numbers(3, 3))
-    print(board.adjacent_vertical_numbers(1, 1))
-    print(board.adjacent_horizontal_numbers(1, 1))
+class Test:
+    def __init__(self):
+        self.test1()
+
+    @staticmethod
+    def test1():
+        # Ler tabuleiro do ficheiro 'i1.txt'(Figura 1):
+        # $ python3 takuzu < i1.txt 
+        board = Board.parse_instance_from_stdin()
+        print("Initial:\n", board, sep="")  
+        # Imprimir valores adjacentes
+        print(board.adjacent_vertical_numbers(3, 3))
+        print(board.adjacent_horizontal_numbers(3, 3))
+        print(board.adjacent_vertical_numbers(1, 1))
+        print(board.adjacent_horizontal_numbers(1, 1))
+
+    @staticmethod
+    def test2():
+        # Ler tabuleiro do ficheiro 'i1.txt'(Figura 1):
+        # $ python3 takuzu < i1.txt
+        board = Board.parse_instance_from_stdin()
+        print("Initial:\n", board, sep="")
+        # Criar uma instância de Takuzu:
+        problem = Takuzu(board)
+        # Criar um estado com a configuração inicial:
+        initial_state = TakuzuState(board)
+        # Mostrar valor na posição (2, 2):
+        print(initial_state.board.get_number(2, 2))
+        # Realizar acção de inserir o número 1 na posição linha 2 e coluna 2
+        result_state = problem.result(initial_state, (2, 2, 1))
+        # Mostrar valor na posição (2, 2):
+        print(result_state.board.get_number(2, 2))
 
 if __name__ == "__main__":
     # TODO:
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
-    test1()
-
+    Test()
