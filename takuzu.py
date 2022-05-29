@@ -140,34 +140,52 @@ class Takuzu(Problem):
         estão preenchidas com uma sequência de números adjacentes."""
         board = state.board
         boardt = state.board.transpose()
-        return Takuzu.check_goal_state(board) == True and Takuzu.check_goal_state(boardt) == True
+        return (Takuzu.check_more_than_two(board) == True and Takuzu.check_duplicate_lines(board) == True
+        and Takuzu.check_duplicate_lines(boardt) == True and Takuzu.check_numbers(board) == True and
+        Takuzu.check_numbers(boardt) == True)
 
-    def check_goal_state(board: Board):
-        n = board.shape
+    def check_more_than_two(board: Board):
         nrow = 0
-        check = {}
         for row in board.board:
-            ncol = zero = one = 0
+            ncol = 0
+            for num in row:
+                adj_horizontal = board.adjacent_horizontal_numbers(nrow, ncol)
+                if adj_horizontal[0] == num and adj_horizontal[1] == num:
+                    return False
+                adj_vertical = board.adjacent_vertical_numbers(nrow, ncol)
+                if adj_vertical[0] == num and adj_vertical[1] == num:
+                    return False
+                ncol += 1
+            nrow+=1
+        return True
+            
+    def check_duplicate_lines(board: Board):
+        check = {}
+        nrow = 1
+        for row in board.board:
             tup = ()
             for num in row:
                 tup = tup + (num,)
-                adj_horizontal = board.adjacent_horizontal_numbers(nrow, ncol)
-                if adj_horizontal[0] == num and adj_horizontal[1] == num:
-                        return False
+            if len(check) != 0 and tup in check.values():
+                return False
+            check[nrow] = tup
+            nrow += 1
+        return True
+    
+    def check_numbers(board: Board):
+        n = board.shape
+        for row in board.board:
+            zero = one = 0
+            for num in row:
                 if num == 0:
                     zero += 1
                 elif num == 1:
                     one +=1
-                ncol += 1
             if zero != one:
                 if n[0] % 2 == 0:
                     return False
                 elif abs(one - zero) != 1:
                     return False
-            if len(check) != 0 and tup in check.values():
-                return False
-            check[nrow+1] = tup
-            nrow +=1
         return True
 
     def h(self, node: Node):
