@@ -49,7 +49,7 @@ class Board:
 
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
-        return self.board[row , col]
+        return self.board[row, col]
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -170,6 +170,9 @@ Solution:
     def prGreen(prt):
         print("\033[92m{}\033[00m" .format(prt))
 
+    def prCyan(prt):
+        print("\033[96m{}\033[00m" .format(prt))
+
     def __init__(self, board: Board, debug: bool = True):
         """Construtor da classe Test."""
         self.test1(board)
@@ -178,7 +181,7 @@ Solution:
         # # self.test4(board)
 
         if debug:
-            Test.prGreen("debug")
+            Test.prCyan("Debug")
             self.test1debug(board)
             # # self.test2debug(board)
             # # self.test3debug(board)
