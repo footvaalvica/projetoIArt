@@ -126,9 +126,46 @@ class Takuzu(Problem):
 
 # APAGR!!! hahahahahahah
 class Test:
+    # estas cenas sao kinda inuteis por agora
+    test1out = """Initial:
+2 1 2 0
+2 2 0 2
+2 0 2 2
+1 1 2 0
+(None, 2)
+(2, None)
+(0, 1)
+(2, 0)"""
+    test2out = """Initial:
+2 1 2 0
+2 2 0 2
+2 0 2 2
+1 1 2 0
+2
+1
+9"""
+    test3out = """Initial:
+2 1 2 0
+2 2 0 2
+2 0 2 2
+1 1 2 0
+Is goal? True
+Solution:
+0 1 1 0
+1 0 0 1
+0 0 1 1
+1 1 0 0
+10"""
+    test4out = """Is goal? True
+Solution:
+0 1 1 0
+1 0 0 1
+0 0 1 1
+1 1 0 0"""
+
     def __init__(self):
         self.test1()
-
+    
     @staticmethod
     def test1():
         # Ler tabuleiro do ficheiro 'i1.txt'(Figura 1):
@@ -157,6 +194,43 @@ class Test:
         result_state = problem.result(initial_state, (2, 2, 1))
         # Mostrar valor na posição (2, 2):
         print(result_state.board.get_number(2, 2))
+
+    @staticmethod
+    def test3():
+        # Ler tabuleiro do ficheiro 'i1.txt'(Figura 1):
+        # $ python3 takuzu < i1.txt
+        board = Board.parse_instance_from_stdin()
+        # Criar uma instância de Takuzu:
+        problem = Takuzu(board)
+        # Criar um estado com a configuração inicial:
+        s0 = TakuzuState(board)
+        print("Initial:\n", s0.board, sep="")
+        # Aplicar as ações que resolvem a instância
+        s1 = problem.result(s0, (0, 0, 0))
+        s2 = problem.result(s1, (0, 2, 1))
+        s3 = problem.result(s2, (1, 0, 1))
+        s4 = problem.result(s3, (1, 1, 0))
+        s5 = problem.result(s4, (1, 3, 1))
+        s6 = problem.result(s5, (2, 0, 0))
+        s7 = problem.result(s6, (2, 2, 1))
+        s8 = problem.result(s7, (2, 3, 1))
+        s9 = problem.result(s8, (3, 2, 0))
+        # Verificar se foi atingida a solução
+        print("Is goal?", problem.goal_test(s9))
+        print("Solution:\n", s9.board, sep="")
+    
+    @staticmethod
+    def test4():
+        # Ler tabuleiro do ficheiro 'i1.txt'(Figura 1):
+        # $ python3 takuzu < i1.txt
+        board = Board.parse_instance_from_stdin()
+        # Criar uma instância de Takuzu:
+        problem = Takuzu(board)
+        # Obter o nó solução usando a procura em profundidade:
+        goal_node = depth_first_tree_search(problem)
+        # Verificar se foi atingida a solução
+        print("Is goal?", problem.goal_test(goal_node.state))
+        print("Solution:\n", goal_node.state.board, sep="")
 
 if __name__ == "__main__":
     # TODO:
