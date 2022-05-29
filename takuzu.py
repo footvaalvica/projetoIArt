@@ -127,11 +127,7 @@ class Takuzu(Problem):
         das presentes na lista obtida pela execução de
         self.actions(state)."""
         #TODO fix, breaks abstraction
-        board = []
-        for row in state.board.board:
-            board.append(tuple(row))
-        board = tuple(board)
-        board = Board(np.array(board))
+        board = Board(np.array(tuple(tuple(row) for row in state.board.board)))
         board.set_number(action[0], action[1], action[2])
         return TakuzuState(board)
 
