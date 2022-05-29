@@ -48,7 +48,6 @@ class Board:
             nabove = self.board[row-1, col]
         else:
             nabove = None
-            
         return (nbelow, nabove)
 
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
@@ -131,9 +130,6 @@ class Takuzu(Problem):
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
         # TODO
-        board = state.board
-        for row in board:
-            bla bla bla
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
