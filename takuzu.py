@@ -18,7 +18,6 @@ from search import (
     recursive_best_first_search,
 )
 
-
 class TakuzuState:
     state_id = 0
 
@@ -124,8 +123,10 @@ class Takuzu(Problem):
 
     # TODO: outros metodos da classe
 
-# APAGR!!! hahahahahahah
 class Test:
+    """APAGR!!! hahahahahahah
+    qnd tiveres a trabalhar no proj colapsa só esta classe, tá feia
+    e se quiseres meter mais testes a correr altera o construtor"""
     # estas cenas sao kinda inuteis por agora
     test1out = """Initial:
 2 1 2 0
@@ -237,4 +238,10 @@ if __name__ == "__main__":
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
+
+    #!! nao mexas aqui por enquanto xD
+    board = Board.parse_instance_from_stdin()
+
+
+    #isto é para correr os testes
     Test()
