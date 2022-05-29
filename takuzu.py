@@ -140,7 +140,37 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        return False
+        board = state.board
+        boardt = state.board.transpose()
+        return self.check_goal_state(board) == True and self.check_goal_state(boardt) == True
+
+    def check_goal_state(board: Board):
+        n = board.shape
+        nrow = 0
+        check = {}
+        for row in board:
+            ncol = zero = one = 0
+            tup = ()
+            for num in row:
+                tup = tup + (num)
+                adj_horizontal = board.adjacent_horizontal_numbers(nrow, ncol)
+                if adj_horizontal[0] == num and adj_horizontal[1] == num:
+                        return False
+                if num == 0:
+                    zero += 1
+                elif num == 1:
+                    one +=1
+                ncol += 1
+            if zero != one:
+                if n[0] % 2 == 0:
+                    return False
+                elif abs(one - zero) != 1:
+                    return False
+            if tup in check.values():
+                return False
+            check[nrow+1] = tup
+            nrow +=1
+        return True
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
