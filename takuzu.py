@@ -178,7 +178,6 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         # # self.test2(board)
         # # self.test3(board)
         # # self.test4(board)
-
     
     @staticmethod
     def test1(board: Board):
