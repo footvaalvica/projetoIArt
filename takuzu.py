@@ -76,7 +76,7 @@ class Board:
         return Board(np.transpose(self.board))
 
     @staticmethod
-    def parse_instance_from_stdin():
+    def parse_instance_from_stdin(goalTest: bool = False):
         """Lê o test do standard input (stdin) que é passado como argumento
         e retorna uma instância da classe Board.
         Por exemplo:
@@ -85,7 +85,10 @@ class Board:
             > stdin.readline()
         """
 
-        input = sys.stdin.readlines()[1:]
+        if goalTest == True:
+            input = sys.stdin.readlines()
+        else: 
+            input = sys.stdin.readlines()[1:]
         for idx, x in enumerate(input):
             x = x[0:len(x)-1]
             list_line = x.split('\t')
@@ -297,6 +300,15 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
             Test.prCyan(Test.test4out)
             print(testOutput)
 
+    @staticmethod
+    def testGoalTest(board: Board):
+        problem = Takuzu(board)
+        state = TakuzuState(board)
+        print(state.board)
+        testOutput = str("Is goal? " + str(problem.goal_test(state)))
+        print(testOutput)
+
+
 if __name__ == "__main__":
     # TODO:
     # Usar uma técnica de procura para resolver a instância,
@@ -305,6 +317,7 @@ if __name__ == "__main__":
 
     #!! nao mexas aqui por enquanto xD
     board = Board.parse_instance_from_stdin()
-
     # correr tests
+
+    
     Test(board)
