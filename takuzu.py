@@ -28,7 +28,8 @@ class Board:
         string = ""
         for row in self.board:
             for col in row:
-                string += str(col) + " "
+                string += str(col) + "\t"
+            string = string[:-1]
             string += "\n"
         return string
 
@@ -144,44 +145,19 @@ class Test:
     qnd tiveres a trabalhar no proj colapsa só esta classe, tá feia
     e se quiseres meter mais testes a correr altera o construtor"""
     # estas cenas sao kinda inuteis por agora
-    test1out = """Initial:
-2 1 2 0
-2 2 0 2
-2 0 2 2
-1 1 2 0
-
+    test1out = """Initial:\n2\t1\t2\t0\n2\t2\t0\t2\n2\t0\t2\t2\n1\t1\t2\t0\n
 (None, 2)
 (2, None)
 (0, 1)
 (2, 0)"""
-    test2out = """Initial:
-2 1 2 0
-2 2 0 2
-2 0 2 2
-1 1 2 0
-
+    test2out = """Initial:\n2\t1\t2\t0\n2\t2\t0\t2\n2\t0\t2\t2\n1\t1\t2\t0\n
 2
-1
-9"""
-    test3out = """Initial:
-2 1 2 0
-2 2 0 2
-2 0 2 2
-1 1 2 0
-
+1"""
+    test3out = """Initial:\n2\t1\t2\t0\n2\t2\t0\t2\n2\t0\t2\t2\n1\t1\t2\t0\n
 Is goal? True
-Solution:
-0 1 1 0
-1 0 0 1
-0 0 1 1
-1 1 0 0
-10"""
+Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
     test4out = """Is goal? True
-Solution:
-0 1 1 0
-1 0 0 1
-0 0 1 1
-1 1 0 0"""
+Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
     @staticmethod
     def prGreen(prt):
