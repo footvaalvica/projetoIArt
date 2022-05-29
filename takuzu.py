@@ -79,10 +79,8 @@ class Board:
     def parse_instance_from_stdin():
         """Lê o test do standard input (stdin) que é passado como argumento
         e retorna uma instância da classe Board.
-
         Por exemplo:
             $ python3 takuzu.py < input_T01
-
             > from sys import stdin
             > stdin.readline()
         """
@@ -149,11 +147,11 @@ class Takuzu(Problem):
         n = board.shape
         nrow = 0
         check = {}
-        for row in board:
+        for row in board.board:
             ncol = zero = one = 0
             tup = ()
             for num in row:
-                tup = tup + (num)
+                tup = tup + (num,)
                 adj_horizontal = board.adjacent_horizontal_numbers(nrow, ncol)
                 if adj_horizontal[0] == num and adj_horizontal[1] == num:
                         return False
@@ -167,7 +165,7 @@ class Takuzu(Problem):
                     return False
                 elif abs(one - zero) != 1:
                     return False
-            if tup in check.values():
+            if len(check) != 0 and tup in check.values():
                 return False
             check[nrow+1] = tup
             nrow +=1
