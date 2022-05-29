@@ -37,6 +37,10 @@ class Board:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.board[row, col]
 
+    def set_number(self, row: int, col: int, value: int) -> None:
+        """Altera o valor na respetiva posição do tabuleiro."""
+        self.board[row, col] = value        
+
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
@@ -123,14 +127,20 @@ class Takuzu(Problem):
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        # TODO
-        pass
+        #TODO fix, breaks abstraction
+        board = []
+        for row in state.board.board:
+            board.append(tuple(row))
+        board = tuple(board)
+        board = Board(np.array(board))
+        board.set_number(action[0], action[1], action[2])
+        return TakuzuState(board)
 
     def goal_test(self, state: TakuzuState):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        # TODO
+        pass
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
@@ -175,7 +185,7 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
     def __init__(self, board: Board):
         """Construtor da classe Test."""
         self.test1(board)
-        # # self.test2(board)
+        self.test2(board)
         # # self.test3(board)
         # # self.test4(board)
     
@@ -189,7 +199,7 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         testOutput += str(board.adjacent_horizontal_numbers(1, 1))
 
         if testOutput == Test.test1out:
-            Test.prGreen("Nice!")
+            Test.prGreen("Test 1 is nice!")
         else:
             Test.prRed("Wrong!")
             Test.prCyan(Test.test1out)
@@ -197,21 +207,20 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
     @staticmethod
     def test2(board: Board):
-        testOutput = ""
-        testOutput.append("Initial:\n", board, sep="")
+        testOutput = str("Initial:\n" + str(board)) + "\n"
         # Criar uma instância de Takuzu:
         problem = Takuzu(board)
         # Criar um estado com a configuração inicial:
         initial_state = TakuzuState(board)
         # Mostrar valor na posição (2, 2):
-        testOutput.append(initial_state.board.get_number(2, 2))
+        testOutput += str(initial_state.board.get_number(2, 2)) + "\n"
         # Realizar acção de inserir o número 1 na posição linha 2 e coluna 2
         result_state = problem.result(initial_state, (2, 2, 1))
         # Mostrar valor na posição (2, 2):
-        testOutput.append(result_state.board.get_number(2, 2))
+        testOutput += str(result_state.board.get_number(2, 2))
 
         if testOutput == Test.test2out:
-            Test.prGreen("Nice!\n")
+            Test.prGreen("Test 2 is nice!")
         else:
             Test.prRed("Wrong!\n")
             Test.prCyan(Test.test2out)
