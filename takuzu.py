@@ -114,7 +114,7 @@ class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
         # TODO
-        pass
+        # # self.initial = TakuzuState(board)
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
@@ -140,7 +140,7 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        pass
+        return False
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
@@ -186,7 +186,7 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         """Construtor da classe Test."""
         self.test1(board)
         self.test2(board)
-        # # self.test3(board)
+        self.test3(board)
         # # self.test4(board)
     
     @staticmethod
@@ -233,7 +233,7 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         problem = Takuzu(board)
         # Criar um estado com a configuração inicial:
         s0 = TakuzuState(board)
-        testOutput.append("Initial:\n", s0.board, sep="")
+        testOutput = str("Initial:\n" + str(s0.board)) + "\n"
         # Aplicar as ações que resolvem a instância
         s1 = problem.result(s0, (0, 0, 0))
         s2 = problem.result(s1, (0, 2, 1))
@@ -245,26 +245,25 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         s8 = problem.result(s7, (2, 3, 1))
         s9 = problem.result(s8, (3, 2, 0))
         # Verificar se foi atingida a solução
-        testOutput.append("Is goal?", problem.goal_test(s9))
-        testOutput.append("Solution:\n", s9.board, sep="")
+        testOutput += str("Is goal? " + str(problem.goal_test(s9))) + "\n"
+        testOutput += str("Solution:\n" + str(s9.board))
 
         if testOutput == Test.test3out:
-            Test.prGreen("Nice!\n")
+            Test.prGreen("Test 3 is nice!")
         else:
-            Test.prRed("Wrong!\n")
+            Test.prRed("Wrong!")
             Test.prCyan(Test.test3out)
             print(testOutput)
     
     @staticmethod
     def test4(board: Board):
-        testOutput = ""
         # Criar uma instância de Takuzu:
         problem = Takuzu(board)
         # Obter o nó solução usando a procura em profundidade:
         goal_node = depth_first_tree_search(problem)
         # Verificar se foi atingida a solução
-        testOutput.append("Is goal?", problem.goal_test(goal_node.state))
-        testOutput.append("Solution:\n", goal_node.state.board, sep="")
+        testOutput = str("Is goal? ", str(problem.goal_test(goal_node.state)))
+        testOutput += ("Solution:\n" + str(goal_node.state.board))
 
         if testOutput == Test.test4out:
             Test.prGreen("Nice!\n")
