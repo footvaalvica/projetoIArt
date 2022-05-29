@@ -22,6 +22,7 @@ class Board:
     """Representação interna de um tabuleiro de Takuzu."""
     def __init__(self, board):
         self.board = board
+        self.shape = board.shape
 
     def __str__(self):
         """Devolve a representação do tabuleiro."""
@@ -141,8 +142,8 @@ class Takuzu(Problem):
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
         board = state.board
-        boardt = state.board.transpose()
-        return self.check_goal_state(board) == True and self.check_goal_state(boardt) == True
+        boardt = Board(state.board.transpose())
+        return Takuzu.check_goal_state(board) == True and Takuzu.check_goal_state(boardt) == True
 
     def check_goal_state(board: Board):
         n = board.shape
