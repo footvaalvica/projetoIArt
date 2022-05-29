@@ -73,7 +73,7 @@ class Board:
 
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
-        return np.transpose(self.board)
+        return Board(np.transpose(self.board))
 
     @staticmethod
     def parse_instance_from_stdin():
@@ -136,7 +136,7 @@ class Takuzu(Problem):
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
         board = state.board
-        boardt = Board(state.board.transpose())
+        boardt = state.board.transpose()
         return Takuzu.check_goal_state(board) == True and Takuzu.check_goal_state(boardt) == True
 
     def check_goal_state(board: Board):
