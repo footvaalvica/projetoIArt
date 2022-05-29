@@ -51,17 +51,35 @@ class Board:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.board[row, col]
 
-    def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
+   def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
-        #TODO
-        pass
+        n = self.board.shape
+        if n[0] > row+1:
+            nbelow = self.board[row+1, col]
+        else:
+            nbelow = None
+        if row+1 != 1:
+            nabove = self.board[row-1, col]
+        else:
+            nabove = None
+
+        return (nbelow, nabove)
 
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
-        #TODO
-        pass
+        n = self.board.shape
+        if n[1] > col+1:
+            nright = self.board[row, col+1]
+        else:
+            nright = None
+        if col+1 != 1:
+            nleft = self.board[row, col-1]
+        else:
+            nleft = None
+        
+        return (nleft, nright)
 
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
