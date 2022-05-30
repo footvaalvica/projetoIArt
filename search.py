@@ -226,7 +226,7 @@ def depth_first_graph_search(problem):
 
     explored = set()
     while frontier:
-        node = frontier.pop()
+        node = frontier.pop()d
         if problem.goal_test(node.state):
             return node
         explored.add(node.state)
