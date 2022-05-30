@@ -6,6 +6,9 @@
 # 99282 Mateus Pinho
 # 99238 Inês Ji
 
+#delete import
+import time
+
 import sys
 import numpy as np
 from search import (
@@ -13,7 +16,9 @@ from search import (
     Node,
     astar_search,
     breadth_first_tree_search,
+    breadth_first_graph_search,
     depth_first_tree_search,
+    depth_first_graph_search,
     greedy_search,
     recursive_best_first_search,
 )
@@ -116,20 +121,43 @@ class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
         # TODO
-        # # self.initial = TakuzuState(board)
+        self.initial = TakuzuState(board)
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        # TODO
-        pass
+        
+        # only check if there are more than two of the same number in a row
+        actions = []
+        board = state.board
+        n = board.shape
+        for row in range(n[0]):
+            for col in range(n[1]):
+                if board.get_number(row, col) == 2:
+                    #!! DUMB SOLUTION
+                    # # actions.append((row, col, 1))
+                    # # actions.append((row, col, 0))
+                    # better solution
+                    nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+                    nleft, nright = board.adjacent_horizontal_numbers(row, col)
+                    if (nbelow == nabove) and (nbelow == 1):
+                        actions.append((row, col, 0))
+                    elif (nbelow == nabove) and (nbelow == 0):
+                        actions.append((row, col, 1))
+                    elif (nleft == nright) and (nleft == 1):
+                        actions.append((row, col, 0))
+                    elif (nleft == nright) and (nleft == 0):
+                        actions.append((row, col, 1))
+                    else:
+                        actions.append((row, col, 0))
+                        actions.append((row, col, 1))
+        return actions
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        #TODO fix, breaks abstraction
         board = Board(np.array(tuple(tuple(row) for row in state.board.board)))
         board.set_number(action[0], action[1], action[2])
         return TakuzuState(board)
@@ -138,17 +166,26 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
+        start = time.time()
+
         board = state.board
         boardt = state.board.transpose()
-        return (Takuzu.check_more_than_two(board) == True and Takuzu.check_duplicate_lines(board) == True
-        and Takuzu.check_duplicate_lines(boardt) == True and Takuzu.check_numbers(board) == True and
+        goal_result =  (Takuzu.check_more_than_two(board) == True and 
+        Takuzu.check_duplicate_lines(board) == True and 
+        Takuzu.check_duplicate_lines(boardt) == True and 
+        Takuzu.check_numbers(board) == True and
         Takuzu.check_numbers(boardt) == True)
+        end = time.time()
+        print ("Time elapsed:", end - start)
+        return goal_result
 
     def check_more_than_two(board: Board):
         nrow = 0
         for row in board.board:
             ncol = 0
             for num in row:
+                if num == 2:
+                    return False
                 adj_horizontal = board.adjacent_horizontal_numbers(nrow, ncol)
                 if adj_horizontal[0] == num and adj_horizontal[1] == num:
                     return False
@@ -210,10 +247,8 @@ class Test:
 2
 1"""
     test3out = """Initial:\n2\t1\t2\t0\n2\t2\t0\t2\n2\t0\t2\t2\n1\t1\t2\t0\n
-Is goal? True
-Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
-    test4out = """Is goal? True
-Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
+Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
+    test4out = """Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
     # cores
     @staticmethod
@@ -230,10 +265,10 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
     def __init__(self, board: Board):
         """Construtor da classe Test."""
-        self.test1(board)
-        self.test2(board)
-        self.test3(board)
-        # # self.test4(board)
+        # # self.test1(board)
+        # # self.test2(board)
+        # # self.test3(board)
+        self.test4(board)
     
     @staticmethod
     def test1(board: Board):
@@ -274,13 +309,11 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
     @staticmethod
     def test3(board: Board):
-        testOutput = ""
         # Criar uma instância de Takuzu:
         problem = Takuzu(board)
         # Criar um estado com a configuração inicial:
         s0 = TakuzuState(board)
-        testOutput = str("Initial:\n" + str(s0.board)) + "\n"
-        # Aplicar as ações que resolvem a instância
+        testOutput = str("Initial:\n" + str(s0.board)) + "\n"       # Aplicar as ações que resolvem a instância
         s1 = problem.result(s0, (0, 0, 0))
         s2 = problem.result(s1, (0, 2, 1))
         s3 = problem.result(s2, (1, 0, 1))
@@ -291,14 +324,17 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         s8 = problem.result(s7, (2, 3, 1))
         s9 = problem.result(s8, (3, 2, 0))
         # Verificar se foi atingida a solução
-        testOutput += str("Is goal? " + str(problem.goal_test(s9))) + "\n"
+        testOutput += str("Is goal?" +  str(problem.goal_test(s9))) + "\n"
         testOutput += str("Solution:\n" + str(s9.board))
 
         if testOutput == Test.test3out:
+            # print diff between test3out and testoutput
+            
             Test.prGreen("Test 3 is nice!")
         else:
             Test.prRed("Wrong!")
             Test.prCyan(Test.test3out)
+            # Test.prRed("DIFF" + str([x for x in testOutput if x not in Test.test3out]))
             print(testOutput)
     
     @staticmethod
@@ -306,9 +342,10 @@ Solution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         # Criar uma instância de Takuzu:
         problem = Takuzu(board)
         # Obter o nó solução usando a procura em profundidade:
-        goal_node = depth_first_tree_search(problem)
+        goal_node = depth_first_graph_search(problem)
         # Verificar se foi atingida a solução
-        testOutput = str("Is goal? ", str(problem.goal_test(goal_node.state)))
+
+        testOutput = str("Is goal?" + str(problem.goal_test(goal_node.state))) + "\n"
         testOutput += ("Solution:\n" + str(goal_node.state.board))
 
         if testOutput == Test.test4out:
@@ -335,7 +372,12 @@ if __name__ == "__main__":
 
     #!! nao mexas aqui por enquanto xD
     board = Board.parse_instance_from_stdin()
-    # correr tests
-
+    # problem = Takuzu(board)
+    # # Obter o nó solução usando a procura em profundidade:
+    # goal_node = depth_first_graph_search(problem)
+    # # Verificar se foi atingida a solução
+    # testOutput = str("Is goal? " + str(problem.goal_test(goal_node.state))) + "\n"
+    # testOutput += ("Solution:\n" + str(goal_node.state.board))
     
+    # correr tests
     Test(board)
