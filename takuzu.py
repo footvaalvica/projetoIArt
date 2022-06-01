@@ -25,9 +25,10 @@ from search import (
 
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
-    def __init__(self, board):
+    def __init__(self, board, unfilled_squares):
         self.board = board
         self.shape = board.shape
+        self.unfilled_squares = unfilled_squares
 
     def __str__(self):
         """Devolve a representação do tabuleiro."""
@@ -78,7 +79,7 @@ class Board:
 
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
-        return Board(np.transpose(self.board))
+        return Board(np.transpose(self.board), self.unfilled_squares)
 
     @staticmethod
     def parse_instance_from_stdin(goalTest: bool = False):
@@ -89,6 +90,8 @@ class Board:
             > from sys import stdin
             > stdin.readline()
         """
+        
+        unfilled_squares = 0
 
         if goalTest == True:
             input = sys.stdin.readlines()
@@ -97,10 +100,13 @@ class Board:
         for idx, x in enumerate(input):
             x = x[0:len(x)-1]
             list_line = x.split('\t')
-            list_line = [int(i) for i in list_line]
+            for i in list_line:
+                if i == 2:
+                    unfilled_squares += 1
+                list_line[list_line.index(i)] = int(i)
             input[idx] = list_line
         board = np.array(input) 
-        return Board(board)
+        return Board(board, unfilled_squares)
 
     # TODO: outros metodos da classe
 
@@ -134,10 +140,6 @@ class Takuzu(Problem):
         for row in range(n[0]):
             for col in range(n[1]):
                 if board.get_number(row, col) == 2:
-                    #!! DUMB SOLUTION
-                    # # actions.append((row, col, 1))
-                    # # actions.append((row, col, 0))
-                    # better solution
                     nbelow, nabove = board.adjacent_vertical_numbers(row, col)
                     nleft, nright = board.adjacent_horizontal_numbers(row, col)
                     if (nbelow == nabove) and (nbelow == 1):
@@ -158,7 +160,7 @@ class Takuzu(Problem):
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        board = Board(np.array(tuple(tuple(row) for row in state.board.board)))
+        board = Board(np.array(tuple(tuple(row) for row in state.board.board)), state.board.unfilled_squares)
         board.set_number(action[0], action[1], action[2])
         return TakuzuState(board)
 
@@ -166,18 +168,18 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        start = time.time()
 
         board = state.board
         boardt = state.board.transpose()
-        goal_result =  (Takuzu.check_more_than_two(board) == True and 
-        Takuzu.check_duplicate_lines(board) == True and 
-        Takuzu.check_duplicate_lines(boardt) == True and 
-        Takuzu.check_numbers(board) == True and
-        Takuzu.check_numbers(boardt) == True)
-        end = time.time()
-        print ("Time elapsed:", end - start)
-        return goal_result
+        if board.unfilled_squares != 0:
+            return False
+        else:
+            goal_result =  (Takuzu.check_more_than_two(board) == True and 
+            Takuzu.check_duplicate_lines(board) == True and 
+            Takuzu.check_duplicate_lines(boardt) == True and 
+            Takuzu.check_numbers(board) == True and
+            Takuzu.check_numbers(boardt) == True)
+            return goal_result
 
     def check_more_than_two(board: Board):
         nrow = 0
