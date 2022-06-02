@@ -250,7 +250,7 @@ class Test:
     test3out = """Initial:\n2\t1\t2\t0\n2\t2\t0\t2\n2\t0\t2\t2\n1\t1\t2\t0\n
 Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
     test4out = """Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
-
+    INITIAL = "Initial:\n"
     # cores
     @staticmethod
     def pr_green(prt):
@@ -273,7 +273,7 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
     
     @staticmethod
     def test1(board: Board):
-        test_output = str("Initial:\n" + str(board)) + "\n"
+        test_output = str(Test.INITIAL + str(board)) + "\n"
         # Imprimir valores adjacentes
         test_output += str(board.adjacent_vertical_numbers(3, 3)) + "\n"
         test_output += str(board.adjacent_horizontal_numbers(3, 3)) + "\n"
@@ -289,7 +289,7 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
     @staticmethod
     def test2(board: Board):
-        test_output = str("Initial:\n" + str(board)) + "\n"
+        test_output = str(Test.INITIAL + str(board)) + "\n"
         # Criar uma instância de Takuzu:
         problem = Takuzu(board)
         # Criar um estado com a configuração inicial:
@@ -314,7 +314,7 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         problem = Takuzu(board)
         # Criar um estado com a configuração inicial:
         s0 = TakuzuState(board)
-        test_output = str("Initial:\n" + str(s0.board)) + "\n"       # Aplicar as ações que resolvem a instância
+        test_output = str(Test.INITIAL + str(s0.board)) + "\n"       # Aplicar as ações que resolvem a instância
         s1 = problem.result(s0, (0, 0, 0))
         s2 = problem.result(s1, (0, 2, 1))
         s3 = problem.result(s2, (1, 0, 1))
