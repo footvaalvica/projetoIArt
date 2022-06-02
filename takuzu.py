@@ -7,8 +7,8 @@
 # 99238 Inês Ji
 
 #delete import
-import time
 
+from re import S
 import sys
 import numpy as np
 from search import (
@@ -25,7 +25,7 @@ from search import (
 
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
-    def __init__(self, board, unfilled_squares):
+    def __init__(self, board, unfilled_squares, actions_counter = 0):
         self.board = board
         self.shape = board.shape
         self.unfilled_squares = unfilled_squares
@@ -44,9 +44,11 @@ class Board:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.board[row, col]
 
-    def set_number(self, row: int, col: int, value: int) -> None:
-        """Altera o valor na respetiva posição do tabuleiro."""
-        self.board[row, col] = value        
+    def deepcopy_set_number(self, row: int, col: int, value: int):
+        """Copia o tabuleiro e altera o valor na respetiva posição."""
+        new_board = self.board.copy()
+        new_board[row, col] = value
+        return Board(new_board, self.unfilled_squares - 1)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -82,7 +84,7 @@ class Board:
         return Board(np.transpose(self.board), self.unfilled_squares)
 
     @staticmethod
-    def parse_instance_from_stdin(goalTest: bool = False):
+    def parse_instance_from_stdin(goal_test: bool = False):
         """Lê o test do standard input (stdin) que é passado como argumento
         e retorna uma instância da classe Board.
         Por exemplo:
@@ -93,19 +95,19 @@ class Board:
         
         unfilled_squares = 0
 
-        if goalTest == True:
-            input = sys.stdin.readlines()
+        if goal_test == True:
+            test = sys.stdin.readlines()
         else: 
-            input = sys.stdin.readlines()[1:]
-        for idx, x in enumerate(input):
+            test = sys.stdin.readlines()[1:]
+        for idx, x in enumerate(test):
             x = x[0:len(x)-1]
             list_line = x.split('\t')
             for i in list_line:
-                if i == 2:
+                if int(i) == 2:
                     unfilled_squares += 1
                 list_line[list_line.index(i)] = int(i)
-            input[idx] = list_line
-        board = np.array(input) 
+            test[idx] = list_line
+        board = np.array(test)
         return Board(board, unfilled_squares)
 
     # TODO: outros metodos da classe
@@ -160,26 +162,27 @@ class Takuzu(Problem):
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        board = Board(np.array(tuple(tuple(row) for row in state.board.board)), state.board.unfilled_squares)
-        board.set_number(action[0], action[1], action[2])
+        board = state.board.deepcopy_set_number(action[0], action[1], action[2])
         return TakuzuState(board)
 
     def goal_test(self, state: TakuzuState):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-
+        # TODO clean up
         board = state.board
         boardt = state.board.transpose()
-        if board.unfilled_squares != 0:
+        if board.unfilled_squares > 0:
             return False
-        else:
+        elif board.unfilled_squares == 0:
             goal_result =  (Takuzu.check_more_than_two(board) == True and 
             Takuzu.check_duplicate_lines(board) == True and 
             Takuzu.check_duplicate_lines(boardt) == True and 
             Takuzu.check_numbers(board) == True and
             Takuzu.check_numbers(boardt) == True)
             return goal_result
+        else:
+            print("Error")
 
     def check_more_than_two(board: Board):
         nrow = 0
