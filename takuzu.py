@@ -6,9 +6,6 @@
 # 99282 Mateus Pinho
 # 99238 Inês Ji
 
-#delete import
-
-from re import S
 import sys
 import numpy as np
 from search import (
@@ -25,15 +22,15 @@ from search import (
 
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
-    def __init__(self, board, unfilled_squares, actions_counter = 0):
-        self.board = board
+    def __init__(self, board, unfilled_squares):
+        self.board_matrix = board
         self.shape = board.shape
         self.unfilled_squares = unfilled_squares
 
     def __str__(self):
         """Devolve a representação do tabuleiro."""
         string = ""
-        for row in self.board:
+        for row in self.board_matrix:
             for col in row:
                 string += str(col) + "\t"
             string = string[:-1]
@@ -42,24 +39,24 @@ class Board:
 
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
-        return self.board[row, col]
+        return self.board_matrix[row, col]
 
     def deepcopy_set_number(self, row: int, col: int, value: int):
         """Copia o tabuleiro e altera o valor na respetiva posição."""
-        new_board = self.board.copy()
+        new_board = self.board_matrix.copy()
         new_board[row, col] = value
         return Board(new_board, self.unfilled_squares - 1)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
-        n = self.board.shape
+        n = self.shape
         if n[0] > row+1:
-            nbelow = self.board[row+1, col]
+            nbelow = self.board_matrix[row+1, col]
         else:
             nbelow = None
         if row+1 != 1:
-            nabove = self.board[row-1, col]
+            nabove = self.board_matrix[row-1, col]
         else:
             nabove = None
         return (nbelow, nabove)
@@ -67,13 +64,13 @@ class Board:
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
-        n = self.board.shape
+        n = self.shape
         if n[1] > col+1:
-            nright = self.board[row, col+1]
+            nright = self.board_matrix[row, col+1]
         else:
             nright = None
         if col+1 != 1:
-            nleft = self.board[row, col-1]
+            nleft = self.board_matrix[row, col-1]
         else:
             nleft = None
         
@@ -81,7 +78,7 @@ class Board:
 
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
-        return Board(np.transpose(self.board), self.unfilled_squares)
+        return Board(np.transpose(self.board_matrix), self.unfilled_squares)
 
     @staticmethod
     def parse_instance_from_stdin(goal_test: bool = False):
@@ -184,9 +181,10 @@ class Takuzu(Problem):
         else:
             print("Error")
 
+    @staticmethod
     def check_more_than_two(board: Board):
         nrow = 0
-        for row in board.board:
+        for row in board.board_matrix:
             ncol = 0
             for num in row:
                 if num == 2:
@@ -200,11 +198,12 @@ class Takuzu(Problem):
                 ncol += 1
             nrow+=1
         return True
-            
+    
+    @staticmethod
     def check_duplicate_lines(board: Board):
         check = {}
         nrow = 1
-        for row in board.board:
+        for row in board.board_matrix:
             tup = ()
             for num in row:
                 tup = tup + (num,)
@@ -214,26 +213,23 @@ class Takuzu(Problem):
             nrow += 1
         return True
     
+    @staticmethod
     def check_numbers(board: Board):
         n = board.shape
-        for row in board.board:
+        for row in board.board_matrix:
             zero = one = 0
             for num in row:
                 if num == 0:
                     zero += 1
                 elif num == 1:
                     one +=1
-            if zero != one:
-                if n[0] % 2 == 0:
-                    return False
-                elif abs(one - zero) != 1:
-                    return False
+            if zero != one and (n[0] % 2 == 0 or abs(one - zero) != 1):
+                return False
         return True
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        # TODO
-        pass
+        return node.state.board.unfilled_squares
 
     # TODO: outros metodos da classe
 
@@ -257,15 +253,15 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
 
     # cores
     @staticmethod
-    def prGreen(prt):
+    def pr_green(prt):
         print("\033[92m{}\033[00m".format(prt))
 
     @staticmethod
-    def prCyan(prt):
+    def pr_cyan(prt):
         print("\033[96m{}\033[00m".format(prt))
 
     @staticmethod
-    def prRed(prt):
+    def pr_red(prt):
         print("\033[91m{}\033[00m".format(prt))
 
     def __init__(self, board: Board):
@@ -277,40 +273,40 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
     
     @staticmethod
     def test1(board: Board):
-        testOutput = str("Initial:\n" + str(board)) + "\n"
+        test_output = str("Initial:\n" + str(board)) + "\n"
         # Imprimir valores adjacentes
-        testOutput += str(board.adjacent_vertical_numbers(3, 3)) + "\n"
-        testOutput += str(board.adjacent_horizontal_numbers(3, 3)) + "\n"
-        testOutput += str(board.adjacent_vertical_numbers(1, 1)) + "\n"
-        testOutput += str(board.adjacent_horizontal_numbers(1, 1))
+        test_output += str(board.adjacent_vertical_numbers(3, 3)) + "\n"
+        test_output += str(board.adjacent_horizontal_numbers(3, 3)) + "\n"
+        test_output += str(board.adjacent_vertical_numbers(1, 1)) + "\n"
+        test_output += str(board.adjacent_horizontal_numbers(1, 1))
 
-        if testOutput == Test.test1out:
-            Test.prGreen("Test 1 is nice!")
+        if test_output == Test.test1out:
+            Test.pr_green("Test 1 is nice!")
         else:
-            Test.prRed("Wrong!")
-            Test.prCyan(Test.test1out)
-            print(testOutput)
+            Test.pr_red("Wrong!")
+            Test.pr_cyan(Test.test1out)
+            print(test_output)
 
     @staticmethod
     def test2(board: Board):
-        testOutput = str("Initial:\n" + str(board)) + "\n"
+        test_output = str("Initial:\n" + str(board)) + "\n"
         # Criar uma instância de Takuzu:
         problem = Takuzu(board)
         # Criar um estado com a configuração inicial:
         initial_state = TakuzuState(board)
         # Mostrar valor na posição (2, 2):
-        testOutput += str(initial_state.board.get_number(2, 2)) + "\n"
+        test_output += str(initial_state.board.get_number(2, 2)) + "\n"
         # Realizar acção de inserir o número 1 na posição linha 2 e coluna 2
         result_state = problem.result(initial_state, (2, 2, 1))
         # Mostrar valor na posição (2, 2):
-        testOutput += str(result_state.board.get_number(2, 2))
+        test_output += str(result_state.board.get_number(2, 2))
 
-        if testOutput == Test.test2out:
-            Test.prGreen("Test 2 is nice!")
+        if test_output == Test.test2out:
+            Test.pr_green("Test 2 is nice!")
         else:
-            Test.prRed("Wrong!\n")
-            Test.prCyan(Test.test2out)
-            print(testOutput)
+            Test.pr_red("Wrong!\n")
+            Test.pr_cyan(Test.test2out)
+            print(test_output)
 
     @staticmethod
     def test3(board: Board):
@@ -318,7 +314,7 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         problem = Takuzu(board)
         # Criar um estado com a configuração inicial:
         s0 = TakuzuState(board)
-        testOutput = str("Initial:\n" + str(s0.board)) + "\n"       # Aplicar as ações que resolvem a instância
+        test_output = str("Initial:\n" + str(s0.board)) + "\n"       # Aplicar as ações que resolvem a instância
         s1 = problem.result(s0, (0, 0, 0))
         s2 = problem.result(s1, (0, 2, 1))
         s3 = problem.result(s2, (1, 0, 1))
@@ -329,18 +325,18 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         s8 = problem.result(s7, (2, 3, 1))
         s9 = problem.result(s8, (3, 2, 0))
         # Verificar se foi atingida a solução
-        testOutput += str("Is goal?" +  str(problem.goal_test(s9))) + "\n"
-        testOutput += str("Solution:\n" + str(s9.board))
+        test_output += str("Is goal?" +  str(problem.goal_test(s9))) + "\n"
+        test_output += str("Solution:\n" + str(s9.board))
 
-        if testOutput == Test.test3out:
+        if test_output == Test.test3out:
             # print diff between test3out and testoutput
             
-            Test.prGreen("Test 3 is nice!")
+            Test.pr_green("Test 3 is nice!")
         else:
-            Test.prRed("Wrong!")
-            Test.prCyan(Test.test3out)
+            Test.pr_red("Wrong!")
+            Test.pr_cyan(Test.test3out)
             # Test.prRed("DIFF" + str([x for x in testOutput if x not in Test.test3out]))
-            print(testOutput)
+            print(test_output)
     
     @staticmethod
     def test4(board: Board):
@@ -350,23 +346,23 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         goal_node = depth_first_graph_search(problem)
         # Verificar se foi atingida a solução
 
-        testOutput = str("Is goal?" + str(problem.goal_test(goal_node.state))) + "\n"
-        testOutput += ("Solution:\n" + str(goal_node.state.board))
+        test_output = str("Is goal?" + str(problem.goal_test(goal_node.state))) + "\n"
+        test_output += ("Solution:\n" + str(goal_node.state.board))
 
-        if testOutput == Test.test4out:
-            Test.prGreen("Nice!\n")
+        if test_output == Test.test4out:
+            Test.pr_green("Nice!\n")
         else:
-            Test.prRed("Wrong!\n")
-            Test.prCyan(Test.test4out)
-            print(testOutput)
+            Test.pr_red("Wrong!\n")
+            Test.pr_cyan(Test.test4out)
+            print(test_output)
 
     @staticmethod
-    def testGoalTest(board: Board):
+    def test_goal_test(board: Board):
         problem = Takuzu(board)
         state = TakuzuState(board)
         print(state.board)
-        testOutput = str("Is goal? " + str(problem.goal_test(state)))
-        print(testOutput)
+        test_output = str("Is goal? " + str(problem.goal_test(state)))
+        print(test_output)
 
 
 if __name__ == "__main__":
