@@ -141,8 +141,8 @@ class Takuzu(Problem):
         
         # only check if there are more than two of the same number in a row
         actions = []
-        actions = Takuzu.filter_actions_1(state, actions)
         board = state.board
+        actions = Takuzu.filter_actions_1(board, board.shape, actions)
         filled = board.get_filled_tuple()
         n = board.shape
         for row in range(n[0]):
@@ -155,10 +155,8 @@ class Takuzu(Problem):
                
         return actions
     
-    def filter_actions_1(state: TakuzuState, actions):
+    def filter_actions_1(board: Board, n, actions):
         reverse = {0: 1, 1: 0}
-        board = state.board
-        n = board.shape
         for row in range(n[0]):
             for col in range(n[1]):
                 num = board.get_number(row, col)
@@ -187,6 +185,9 @@ class Takuzu(Problem):
                     elif (nleft == nright) and (nleft !=2 and nright != 2):
                         actions.append((row, col, reverse[nleft]))
                         board.set_filled_tuple(row, col)
+                    # # else:
+                    # #     actions.append((row, col, 0))
+                    # #     actions.append((row, col, 1))
             
         return actions
 
@@ -202,12 +203,12 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        # TODO clean up
+        #?? nao sei quao importante é otimizar aqui
         board = state.board
-        boardt = state.board.transpose()
         if board.unfilled_squares > 0:
             return False
         elif board.unfilled_squares == 0:
+            boardt = state.board.transpose()
             goal_result =  (Takuzu.check_more_than_two(board) == True and 
             Takuzu.check_duplicate_lines(board) == True and 
             Takuzu.check_duplicate_lines(boardt) == True and 
