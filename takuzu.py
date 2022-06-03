@@ -26,6 +26,7 @@ class Board:
         self.board_matrix = board
         self.shape = board.shape
         self.unfilled_squares = unfilled_squares
+        self.filled_squares = ()
 
     def __str__(self):
         """Devolve a representação do tabuleiro."""
@@ -36,6 +37,12 @@ class Board:
             string = string[:-1]
             string += "\n"
         return string
+
+    def set_filled_tuple (self, row: int, col: int):
+        self.filled_squares = self.filled_squares + ((row, col),)
+
+    def get_filled_tuple (self):
+        return self.filled_squares
 
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
@@ -134,24 +141,53 @@ class Takuzu(Problem):
         
         # only check if there are more than two of the same number in a row
         actions = []
+        actions = Takuzu.filter_actions_1(state, actions)
+        board = state.board
+        filled = board.get_filled_tuple()
+        n = board.shape
+        for row in range(n[0]):
+            for col in range(n[1]):
+                num = board.get_number(row, col)
+                if num == 2:
+                    if ((row, col) not in filled):
+                        actions.append((row, col, 0))
+                        actions.append((row, col, 1))
+               
+        return actions
+    
+    def filter_actions_1(state: TakuzuState, actions):
+        reverse = {0: 1, 1: 0}
         board = state.board
         n = board.shape
         for row in range(n[0]):
             for col in range(n[1]):
-                if board.get_number(row, col) == 2:
-                    nbelow, nabove = board.adjacent_vertical_numbers(row, col)
-                    nleft, nright = board.adjacent_horizontal_numbers(row, col)
-                    if (nbelow == nabove) and (nbelow == 1):
-                        actions.append((row, col, 0))
-                    elif (nbelow == nabove) and (nbelow == 0):
-                        actions.append((row, col, 1))
-                    elif (nleft == nright) and (nleft == 1):
-                        actions.append((row, col, 0))
-                    elif (nleft == nright) and (nleft == 0):
-                        actions.append((row, col, 1))
-                    else:
-                        actions.append((row, col, 0))
-                        actions.append((row, col, 1))
+                num = board.get_number(row, col)
+                nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+                nleft, nright = board.adjacent_horizontal_numbers(row, col)
+                if num != 2:
+                    if (nbelow == num) and (nabove == 2):
+                        actions.append((row-1, col, reverse[num]))
+                        board.set_filled_tuple(row-1, col)
+                        
+                    if (nabove == num) and (nbelow == 2):
+                        actions.append((row+1, col, reverse[num]))
+                        board.set_filled_tuple(row+1, col)
+                        
+                    if (nleft == num) and (nright == 2):
+                        actions.append((row, col+1, reverse[num]))
+                        board.set_filled_tuple(row, col+1)
+                        
+                    if (nright == num) and (nleft == 2):
+                        actions.append((row, col-1, reverse[num]))
+                        board.set_filled_tuple(row, col-1)
+                if num == 2:
+                    if (nbelow == nabove) and (nbelow !=2 and nabove != 2):
+                        actions.append((row, col, reverse[nbelow]))
+                        board.set_filled_tuple(row, col)
+                    elif (nleft == nright) and (nleft !=2 and nright != 2):
+                        actions.append((row, col, reverse[nleft]))
+                        board.set_filled_tuple(row, col)
+            
         return actions
 
     def result(self, state: TakuzuState, action):
@@ -187,8 +223,6 @@ class Takuzu(Problem):
         for row in board.board_matrix:
             ncol = 0
             for num in row:
-                if num == 2:
-                    return False
                 adj_horizontal = board.adjacent_horizontal_numbers(nrow, ncol)
                 if adj_horizontal[0] == num and adj_horizontal[1] == num:
                     return False
@@ -373,6 +407,7 @@ if __name__ == "__main__":
 
     #!! nao mexas aqui por enquanto xD
     board = Board.parse_instance_from_stdin()
+    
     # problem = Takuzu(board)
     # # Obter o nó solução usando a procura em profundidade:
     # goal_node = depth_first_graph_search(problem)
