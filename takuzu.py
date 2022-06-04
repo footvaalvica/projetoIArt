@@ -22,10 +22,11 @@ from search import (
 
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
-    def __init__(self, board, unfilled_squares):
+    def __init__(self, board, unfilled_squares, unfilled_squares_by_row):
         self.board_matrix = board
         self.shape = board.shape
         self.unfilled_squares = unfilled_squares
+        self.unfilled_squares_by_row = unfilled_squares_by_row
         self.filled_squares = ()
 
     def __str__(self):
@@ -51,8 +52,10 @@ class Board:
     def deepcopy_set_number(self, row: int, col: int, value: int):
         """Copia o tabuleiro e altera o valor na respetiva posição."""
         new_board = self.board_matrix.copy()
+        unfilled_squares_by_row = self.unfilled_squares_by_row.copy()
+        unfilled_squares_by_row[row] = unfilled_squares_by_row[row] - 1
         new_board[row, col] = value
-        return Board(new_board, self.unfilled_squares - 1)
+        return Board(new_board, self.unfilled_squares - 1, unfilled_squares_by_row)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -83,9 +86,17 @@ class Board:
         
         return (nleft, nright)
 
+    def strip_twos(self):
+        board_matrix = self.board_matrix.copy()
+        for i in range(self.shape[0]):
+            for j in range(self.shape[1]):
+                if board_matrix[i, j] == 2:
+                    board_matrix[i, j] = 0
+        return Board(board_matrix, self.unfilled_squares, self.unfilled_squares_by_row)
+
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
-        return Board(np.transpose(self.board_matrix), self.unfilled_squares)
+        return Board(np.transpose(self.board_matrix), self.unfilled_squares, self.unfilled_squares_by_row)
 
     @staticmethod
     def parse_instance_from_stdin(goal_test: bool = False):
@@ -98,6 +109,7 @@ class Board:
         """
         
         unfilled_squares = 0
+        unfilled_squares_by_row = []
 
         if goal_test == True:
             test = sys.stdin.readlines()
@@ -106,13 +118,15 @@ class Board:
         for idx, x in enumerate(test):
             x = x[0:len(x)-1]
             list_line = x.split('\t')
+            unfilled_squares_by_row.append(0)
             for i in list_line:
                 if int(i) == 2:
                     unfilled_squares += 1
+                    unfilled_squares_by_row[idx] += 1
                 list_line[list_line.index(i)] = int(i)
             test[idx] = list_line
         board = np.array(test)
-        return Board(board, unfilled_squares)
+        return Board(board, unfilled_squares, unfilled_squares_by_row)
 
     # TODO: outros metodos da classe
 
@@ -138,13 +152,70 @@ class Takuzu(Problem):
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        
+        def sum_check(board, n, actions):
+            board2 = board.strip_twos()
+            sums = board2.board_matrix.sum(axis=1)      
+            if (n % 2 == 0):
+                goal_sum = n // 2
+                # # print(goal_sum)
+                # # print("sums", sums)
+                for i in sums:
+                    if i > goal_sum:
+                        # apagamos o actions todo e idealmente deveriamos devolver logo
+                        return []
+                    else:
+                        return actions
+                # # final_list = [[i, board.unfilled_squares_by_row[i.inc], goal_sum] for i in sums]
+                # # print("final_list", final_list)
+            else:
+                return actions
+                # # print("sums", sums)
+                # # print("unfilled_squares_by_row", board.unfilled_squares_by_row)
+
+        def filter_actions_1(board: Board, n, actions):
+            reverse = {0: 1, 1: 0}
+            for row in range(n[0]):
+                for col in range(n[1]):
+                    num = board.get_number(row, col)
+                    nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+                    nleft, nright = board.adjacent_horizontal_numbers(row, col)
+                    if num != 2:
+                        if (nbelow == num) and (nabove == 2):
+                            actions.append((row-1, col, reverse[num]))
+                            board.set_filled_tuple(row-1, col)
+                            
+                        if (nabove == num) and (nbelow == 2):
+                            actions.append((row+1, col, reverse[num]))
+                            board.set_filled_tuple(row+1, col)
+                            
+                        if (nleft == num) and (nright == 2):
+                            actions.append((row, col+1, reverse[num]))
+                            board.set_filled_tuple(row, col+1)
+                            
+                        if (nright == num) and (nleft == 2):
+                            actions.append((row, col-1, reverse[num]))
+                            board.set_filled_tuple(row, col-1)
+                    if num == 2:
+                        if (nbelow == nabove) and (nbelow !=2 and nabove != 2):
+                            actions.append((row, col, reverse[nbelow]))
+                            board.set_filled_tuple(row, col)
+                        elif (nleft == nright) and (nleft !=2 and nright != 2):
+                            actions.append((row, col, reverse[nleft]))
+                            board.set_filled_tuple(row, col)
+                        # # else:
+                        # #     actions.append((row, col, 0))
+                        # #     actions.append((row, col, 1))
+            return actions
+
         # only check if there are more than two of the same number in a row
         actions = []
         board = state.board
-        actions = Takuzu.filter_actions_1(board, board.shape, actions)
-        filled = board.get_filled_tuple()
         n = board.shape
+        actions = filter_actions_1(board, n, actions)
+        actions = sum_check(board, n[0], actions)
+        if actions == []:
+            return []
+        filled = board.get_filled_tuple()
         for row in range(n[0]):
             for col in range(n[1]):
                 num = board.get_number(row, col)
@@ -153,42 +224,6 @@ class Takuzu(Problem):
                         actions.append((row, col, 0))
                         actions.append((row, col, 1))
                
-        return actions
-    
-    def filter_actions_1(board: Board, n, actions):
-        reverse = {0: 1, 1: 0}
-        for row in range(n[0]):
-            for col in range(n[1]):
-                num = board.get_number(row, col)
-                nbelow, nabove = board.adjacent_vertical_numbers(row, col)
-                nleft, nright = board.adjacent_horizontal_numbers(row, col)
-                if num != 2:
-                    if (nbelow == num) and (nabove == 2):
-                        actions.append((row-1, col, reverse[num]))
-                        board.set_filled_tuple(row-1, col)
-                        
-                    if (nabove == num) and (nbelow == 2):
-                        actions.append((row+1, col, reverse[num]))
-                        board.set_filled_tuple(row+1, col)
-                        
-                    if (nleft == num) and (nright == 2):
-                        actions.append((row, col+1, reverse[num]))
-                        board.set_filled_tuple(row, col+1)
-                        
-                    if (nright == num) and (nleft == 2):
-                        actions.append((row, col-1, reverse[num]))
-                        board.set_filled_tuple(row, col-1)
-                if num == 2:
-                    if (nbelow == nabove) and (nbelow !=2 and nabove != 2):
-                        actions.append((row, col, reverse[nbelow]))
-                        board.set_filled_tuple(row, col)
-                    elif (nleft == nright) and (nleft !=2 and nright != 2):
-                        actions.append((row, col, reverse[nleft]))
-                        board.set_filled_tuple(row, col)
-                    # # else:
-                    # #     actions.append((row, col, 0))
-                    # #     actions.append((row, col, 1))
-            
         return actions
 
     def result(self, state: TakuzuState, action):
@@ -209,7 +244,7 @@ class Takuzu(Problem):
             return False
         elif board.unfilled_squares == 0:
             boardt = state.board.transpose()
-            goal_result =  (Takuzu.check_more_than_two(board) == True and 
+            goal_result = (Takuzu.check_more_than_two(board) == True and 
             Takuzu.check_duplicate_lines(board) == True and 
             Takuzu.check_duplicate_lines(boardt) == True and 
             Takuzu.check_numbers(board) == True and
