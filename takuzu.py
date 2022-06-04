@@ -152,23 +152,41 @@ class Takuzu(Problem):
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        def sum_check(board, n, actions):
+        def sum_check(board, n, actions, even: bool = True):
+            # TODO do for odd numbers
+            def final_list_generator(sums, actions):
+                final_list = []
+                for idx, x in enumerate(sums):
+                    final_list.append((x, board.unfilled_squares_by_row[idx]))
+                for idx, x in enumerate(final_list):
+                    if x[0] == goal_sum and x[1] > 0:
+                        for col in range(n):
+                            if (idx, col, 1) in actions:
+                                actions.remove((idx, col, 1))
+                            elif x[0] - x[1] == goal_sum and x[1] > 0:
+                                for col in range(n):
+                                    if (idx, col, 1) in actions:
+                                        actions.remove((idx, col, 0))
+
             board2 = board.strip_twos()
             sums = board2.board_matrix.sum(axis=1)      
             if (n % 2 == 0):
                 goal_sum = n // 2
-                # # print(goal_sum)
-                # # print("sums", sums)
                 for i in sums:
                     if i > goal_sum:
                         # apagamos o actions todo e idealmente deveriamos devolver logo
                         return []
                     else:
+                        final_list_generator(sums, actions)
                         return actions
-                # # final_list = [[i, board.unfilled_squares_by_row[i.inc], goal_sum] for i in sums]
-                # # print("final_list", final_list)
             else:
-                return actions
+                goal_sum = n // 2
+                for i in sums:
+                    if i >= goal_sum:
+                        return []
+                    else:
+                        # # final_list_generator(sums, actions)
+                        return actions
                 # # print("sums", sums)
                 # # print("unfilled_squares_by_row", board.unfilled_squares_by_row)
 
@@ -202,9 +220,6 @@ class Takuzu(Problem):
                         elif (nleft == nright) and (nleft !=2 and nright != 2):
                             actions.append((row, col, reverse[nleft]))
                             board.set_filled_tuple(row, col)
-                        # # else:
-                        # #     actions.append((row, col, 0))
-                        # #     actions.append((row, col, 1))
             return actions
 
         # only check if there are more than two of the same number in a row
@@ -212,9 +227,6 @@ class Takuzu(Problem):
         board = state.board
         n = board.shape
         actions = filter_actions_1(board, n, actions)
-        actions = sum_check(board, n[0], actions)
-        if actions == []:
-            return []
         filled = board.get_filled_tuple()
         for row in range(n[0]):
             for col in range(n[1]):
@@ -223,6 +235,9 @@ class Takuzu(Problem):
                     if ((row, col) not in filled):
                         actions.append((row, col, 0))
                         actions.append((row, col, 1))
+        actions = sum_check(board, n[0], actions)
+        if actions == []:
+            return []
                
         return actions
 
@@ -433,7 +448,6 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         print(state.board)
         test_output = str("Is goal? " + str(problem.goal_test(state)))
         print(test_output)
-
 
 if __name__ == "__main__":
     # TODO:
