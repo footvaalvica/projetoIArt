@@ -54,10 +54,7 @@ class Board:
         new_board = self.board_matrix.copy()
         unfilled_squares_by_row = self.unfilled_squares_by_row.copy()
         unfilled_squares_by_row[row] = unfilled_squares_by_row[row] - 1
-        if new_board[row, col] != 2:
-            new_board[row, col] = value
-        else:
-            pass
+        new_board[row, col] = value
         return Board(new_board, self.unfilled_squares - 1, unfilled_squares_by_row)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
@@ -154,6 +151,7 @@ class Takuzu(Problem):
         """O construtor especifica o estado inicial."""
         # TODO
         self.initial = TakuzuState(board)
+        self.has_action_dict = {}
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
@@ -252,30 +250,30 @@ class Takuzu(Problem):
         # finally add all actions not in the list
 
         actions = []
-        has_action_dict = {}
+        self.has_action_dict = {}
+        has_action_dict = self.has_action_dict
         board = state.board
         n = board.shape
         actions = sum_check(board, n[0], actions, has_action_dict)
         # # actions = sum_check_transpose()
         actions = filter_actions_1(board, n, actions, has_action_dict)
-        print("filter actions", actions)
-        if actions == []:
-            return []
         for i in range(n[0]):
             for j in range(n[1]):
-                if (i, j) not in has_action_dict and board.get_number(i, j) != 2:
+                if (i, j) not in has_action_dict and board.get_number(i, j) == 2:
                     actions.append((i, j, 0))
                     actions.append((i, j, 1))
-        print("final actions", actions)
-        print("has_action_dict", has_action_dict)
+        # # print(has_action_dict)
+        # # print(actions)
         return actions
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
-        self.actions(state).""" 
+        self.actions(state)."""
         board = state.board.deepcopy_set_number(action[0], action[1], action[2])
+        if (action[0], action[1]) in self.has_action_dict:
+            del self.has_action_dict[(action[0], action[1])]
         return TakuzuState(board)
 
     def goal_test(self, state: TakuzuState):
@@ -294,9 +292,6 @@ class Takuzu(Problem):
             Takuzu.check_numbers(board) == True and
             Takuzu.check_numbers(boardt) == True)
             return goal_result
-        else:
-            print("board unfilled squares", board.unfilled_squares)
-            print("Error")
 
     @staticmethod
     def check_more_than_two(board: Board):
@@ -344,7 +339,7 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.unfilled_squares
+        return node.state.board.unfilled_squares - len(self.has_action_dict)
 
     # TODO: outros metodos da classe
 
