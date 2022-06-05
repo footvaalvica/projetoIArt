@@ -239,6 +239,7 @@ class Takuzu(Problem):
         if actions == []:
             return []
                
+        print(actions)
         return actions
 
     def result(self, state: TakuzuState, action):
