@@ -54,8 +54,10 @@ class Board:
         new_board = self.board_matrix.copy()
         unfilled_squares_by_row = self.unfilled_squares_by_row.copy()
         unfilled_squares_by_row[row] = unfilled_squares_by_row[row] - 1
-        new_board[row, col] = value
-        print(new_board)
+        if new_board[row, col] != 2:
+            new_board[row, col] = value
+        else:
+            pass
         return Board(new_board, self.unfilled_squares - 1, unfilled_squares_by_row)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
@@ -167,12 +169,12 @@ class Takuzu(Problem):
                             for col in range(n):
                                 if board.get_number(idx, col) == 2:
                                     actions.append((idx, col, 0))
-                                    has_action_dict[idx, col] = True
+                                    has_action_dict[(idx, col)] = True
                         elif (abs(x[0] - x[1]) == goal_sum) and (x[1] > 0):
                             for col in range(n):
                                 if board.get_number(idx, col) == 2:
                                     actions.append((idx, col, 1))
-                                    has_action_dict[idx, col] = True
+                                    has_action_dict[(idx, col)] = True
                 else:
                     #TODO FOR ODD NUMBERED BOARDS
                     pass
@@ -208,38 +210,38 @@ class Takuzu(Problem):
                         if (nbelow == num) and (nabove == 2):
                             if (row - 1, col) not in has_action_dict:
                                 actions.append((row - 1, col, reverse[num]))
-                                has_action_dict[row - 1, col] = True
+                                has_action_dict[(row - 1, col)] = True
                             else:
                                 pass
                         if (nabove == num) and (nbelow == 2):
                             if (row + 1, col) not in has_action_dict:
                                 actions.append((row + 1, col, reverse[num]))
-                                has_action_dict[row + 1, col] = True
+                                has_action_dict[(row + 1, col)] = True
                             else:
                                 pass
                         if (nleft == num) and (nright == 2):
                             if (row, col + 1) not in has_action_dict:
                                 actions.append((row, col + 1, reverse[num]))
-                                has_action_dict[row, col + 1] = True
+                                has_action_dict[(row, col + 1)] = True
                             else:
                                pass
                         if (nright == num) and (nleft == 2):
                             if (row, col - 1) not in has_action_dict:
                                 actions.append((row, col - 1, reverse[num]))
-                                has_action_dict[row, col - 1] = True
+                                has_action_dict[(row, col - 1)] = True
                             else:
                                 pass
                     if num == 2:
-                        if (nbelow == nabove) and (nbelow !=2 and nabove != 2):
+                        if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
                             if (row, col) not in has_action_dict:
                                 actions.append((row, col, reverse[nbelow]))
-                                has_action_dict[row, col] = True
+                                has_action_dict[(row, col)] = True
                             else:
                                 pass
                         elif (nleft == nright) and (nleft !=2 and nright != 2):
                             if (row, col) not in has_action_dict:
                                 actions.append((row, col, reverse[nleft]))
-                                has_action_dict[row, col] = True
+                                has_action_dict[(row, col)] = True
                             else:
                                 pass
             return actions
@@ -252,19 +254,20 @@ class Takuzu(Problem):
         actions = []
         has_action_dict = {}
         board = state.board
-        n = board.shape 
+        n = board.shape
         actions = sum_check(board, n[0], actions, has_action_dict)
-        print("sum actions", actions)
+        # # actions = sum_check_transpose()
         actions = filter_actions_1(board, n, actions, has_action_dict)
         print("filter actions", actions)
         if actions == []:
             return []
         for i in range(n[0]):
             for j in range(n[1]):
-                if (i, j) not in has_action_dict:
+                if (i, j) not in has_action_dict and board.get_number(i, j) != 2:
                     actions.append((i, j, 0))
                     actions.append((i, j, 1))
         print("final actions", actions)
+        print("has_action_dict", has_action_dict)
         return actions
 
     def result(self, state: TakuzuState, action):
