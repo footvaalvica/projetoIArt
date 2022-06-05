@@ -55,6 +55,7 @@ class Board:
         unfilled_squares_by_row = self.unfilled_squares_by_row.copy()
         unfilled_squares_by_row[row] = unfilled_squares_by_row[row] - 1
         new_board[row, col] = value
+        print(new_board)
         return Board(new_board, self.unfilled_squares - 1, unfilled_squares_by_row)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
@@ -86,13 +87,16 @@ class Board:
         
         return (nleft, nright)
 
-    def strip_twos(self):
-        board_matrix = self.board_matrix.copy()
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                if board_matrix[i, j] == 2:
-                    board_matrix[i, j] = 0
-        return Board(board_matrix, self.unfilled_squares, self.unfilled_squares_by_row)
+    def board_line_sum_without_number_two(self) -> list:
+        """Devolve a soma de todas as linhas do tabuleiro,
+        sem considerar o número 2."""
+        line_sum = []
+        for (idx, row) in enumerate(self.board_matrix):
+            line_sum.append(0)
+            for col in row:
+                if col != 2:
+                    line_sum[idx] += col
+        return line_sum
 
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
@@ -152,32 +156,35 @@ class Takuzu(Problem):
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        def sum_check(board, n, actions, even: bool = True):
-            # TODO do for odd numbers
-            def final_list_generator(sums, actions):
+        def sum_check(board, n, actions, has_action_dict):
+            def final_list_generator(sums, actions, has_action_dict, even = True):
                 final_list = []
                 for idx, x in enumerate(sums):
                     final_list.append((x, board.unfilled_squares_by_row[idx]))
-                for idx, x in enumerate(final_list):
-                    if x[0] == goal_sum and x[1] > 0:
-                        for col in range(n):
-                            if (idx, col, 1) in actions:
-                                actions.remove((idx, col, 1))
-                            elif x[0] - x[1] == goal_sum and x[1] > 0:
-                                for col in range(n):
-                                    if (idx, col, 1) in actions:
-                                        actions.remove((idx, col, 0))
-
-            board2 = board.strip_twos()
-            sums = board2.board_matrix.sum(axis=1)      
+                if even:
+                    for idx, x in enumerate(final_list):
+                        if x[0] == goal_sum and x[1] > 0:
+                            for col in range(n):
+                                if board.get_number(idx, col) == 2:
+                                    actions.append((idx, col, 0))
+                                    has_action_dict[idx, col] = True
+                        elif (abs(x[0] - x[1]) == goal_sum) and (x[1] > 0):
+                            for col in range(n):
+                                if board.get_number(idx, col) == 2:
+                                    actions.append((idx, col, 1))
+                                    has_action_dict[idx, col] = True
+                else:
+                    #TODO FOR ODD NUMBERED BOARDS
+                    pass
+            
+            sums = board.board_line_sum_without_number_two()      
             if (n % 2 == 0):
                 goal_sum = n // 2
                 for i in sums:
                     if i > goal_sum:
-                        # apagamos o actions todo e idealmente deveriamos devolver logo
                         return []
                     else:
-                        final_list_generator(sums, actions)
+                        final_list_generator(sums, actions, has_action_dict)
                         return actions
             else:
                 goal_sum = n // 2
@@ -185,12 +192,12 @@ class Takuzu(Problem):
                     if i >= goal_sum:
                         return []
                     else:
-                        # # final_list_generator(sums, actions)
+                        final_list_generator(sums, actions, has_action_dict, even = False)
                         return actions
-                # # print("sums", sums)
-                # # print("unfilled_squares_by_row", board.unfilled_squares_by_row)
+            # # print("sums", sums)
+            # # print("unfilled_squares_by_row", board.unfilled_squares_by_row)
 
-        def filter_actions_1(board: Board, n, actions):
+        def filter_actions_1(board: Board, n, actions, has_action_dict):
             reverse = {0: 1, 1: 0}
             for row in range(n[0]):
                 for col in range(n[1]):
@@ -199,53 +206,72 @@ class Takuzu(Problem):
                     nleft, nright = board.adjacent_horizontal_numbers(row, col)
                     if num != 2:
                         if (nbelow == num) and (nabove == 2):
-                            actions.append((row-1, col, reverse[num]))
-                            board.set_filled_tuple(row-1, col)
-                            
+                            if (row - 1, col) not in has_action_dict:
+                                actions.append((row - 1, col, reverse[num]))
+                                has_action_dict[row - 1, col] = True
+                            else:
+                                pass
                         if (nabove == num) and (nbelow == 2):
-                            actions.append((row+1, col, reverse[num]))
-                            board.set_filled_tuple(row+1, col)
-                            
+                            if (row + 1, col) not in has_action_dict:
+                                actions.append((row + 1, col, reverse[num]))
+                                has_action_dict[row + 1, col] = True
+                            else:
+                                pass
                         if (nleft == num) and (nright == 2):
-                            actions.append((row, col+1, reverse[num]))
-                            board.set_filled_tuple(row, col+1)
-                            
+                            if (row, col + 1) not in has_action_dict:
+                                actions.append((row, col + 1, reverse[num]))
+                                has_action_dict[row, col + 1] = True
+                            else:
+                               pass
                         if (nright == num) and (nleft == 2):
-                            actions.append((row, col-1, reverse[num]))
-                            board.set_filled_tuple(row, col-1)
+                            if (row, col - 1) not in has_action_dict:
+                                actions.append((row, col - 1, reverse[num]))
+                                has_action_dict[row, col - 1] = True
+                            else:
+                                pass
                     if num == 2:
                         if (nbelow == nabove) and (nbelow !=2 and nabove != 2):
-                            actions.append((row, col, reverse[nbelow]))
-                            board.set_filled_tuple(row, col)
+                            if (row, col) not in has_action_dict:
+                                actions.append((row, col, reverse[nbelow]))
+                                has_action_dict[row, col] = True
+                            else:
+                                pass
                         elif (nleft == nright) and (nleft !=2 and nright != 2):
-                            actions.append((row, col, reverse[nleft]))
-                            board.set_filled_tuple(row, col)
+                            if (row, col) not in has_action_dict:
+                                actions.append((row, col, reverse[nleft]))
+                                has_action_dict[row, col] = True
+                            else:
+                                pass
             return actions
 
-        # only check if there are more than two of the same number in a row
+        # good flow of code
+        # first add all the actions that are possible via sum of board
+        # then remove actions that are not possible via adjacent squares
+        # finally add all actions not in the list
+
         actions = []
+        has_action_dict = {}
         board = state.board
-        n = board.shape
-        actions = filter_actions_1(board, n, actions)
-        filled = board.get_filled_tuple()
-        for row in range(n[0]):
-            for col in range(n[1]):
-                num = board.get_number(row, col)
-                if num == 2:
-                    if ((row, col) not in filled):
-                        actions.append((row, col, 0))
-                        actions.append((row, col, 1))
-        actions = sum_check(board, n[0], actions)
+        n = board.shape 
+        actions = sum_check(board, n[0], actions, has_action_dict)
+        print("sum actions", actions)
+        actions = filter_actions_1(board, n, actions, has_action_dict)
+        print("filter actions", actions)
         if actions == []:
             return []
-               
+        for i in range(n[0]):
+            for j in range(n[1]):
+                if (i, j) not in has_action_dict:
+                    actions.append((i, j, 0))
+                    actions.append((i, j, 1))
+        print("final actions", actions)
         return actions
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
-        self.actions(state)."""
+        self.actions(state).""" 
         board = state.board.deepcopy_set_number(action[0], action[1], action[2])
         return TakuzuState(board)
 
@@ -266,6 +292,7 @@ class Takuzu(Problem):
             Takuzu.check_numbers(boardt) == True)
             return goal_result
         else:
+            print("board unfilled squares", board.unfilled_squares)
             print("Error")
 
     @staticmethod
