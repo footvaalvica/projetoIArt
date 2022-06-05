@@ -174,6 +174,7 @@ class Takuzu(Problem):
                             if board.get_number(idx, col) == 2:
                                 actions.append((idx, col, 1))
                                 has_action_dict[(idx, col)] = True
+        
             else:
                 for idx, x in enumerate(final_list):
                     if (x[0] == (goal_sum or goal_sum + 1)) and x[1] > 0:
@@ -186,6 +187,8 @@ class Takuzu(Problem):
                             if board.get_number(idx, col) == 2:
                                 actions.append((idx, col, 1))
                                 has_action_dict[(idx, col)] = True
+
+            return actions, has_action_dict
 
         def filter_actions_1(board: Board, n, actions, has_action_dict):
             reverse = {0: 1, 1: 0}
@@ -243,14 +246,14 @@ class Takuzu(Problem):
                         return []
                     else:
                         final_list_generator(sums, actions, has_action_dict, goal_sum, n)
-                        return actions
+                        return actions, has_action_dict
             else:
                 for i in sums:
                     if i >= goal_sum:
                         return []
                 else:
                     final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = False)
-                    return actions
+                    return actions, has_action_dict
 
         def all_the_things(actions, has_action_dict, board, n):
             sums = []
@@ -259,14 +262,14 @@ class Takuzu(Problem):
                 for col in range(n[1]):
                     if board.get_number(row, col) != 2:
                         sums[row] += board.get_number(row, col)
-                    sums_func(n[0], sums, actions, has_action_dict)
-                    
+                    actions, has_action_dict = sums_func(n[0], sums, actions, has_action_dict)
+            return actions, has_action_dict
         actions = []
         self.has_action_dict = {}
         has_action_dict = self.has_action_dict
         board = state.board
         n = board.shape
-        all_the_things(actions, has_action_dict, board, n)
+        actions, has_action_dict = all_the_things(actions, has_action_dict, board, n)
         # # transpose_actions = []
         # # transpose_has_action_dict = {}
         # # transpose_actions = sum_check(board.transpose(), n[0], transpose_actions, transpose_has_action_dict)
