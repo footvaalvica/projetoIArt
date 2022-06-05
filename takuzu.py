@@ -174,8 +174,17 @@ class Takuzu(Problem):
                                     actions.append((idx, col, 1))
                                     has_action_dict[(idx, col)] = True
                 else:
-                    #TODO FOR ODD NUMBERED BOARDS
-                    pass
+                    for idx, x in enumerate(final_list):
+                        if (x[0] == (goal_sum or goal_sum + 1)) and x[1] > 0:
+                            for col in range(n):
+                                if board.get_number(idx, col) == 2:
+                                    actions.append((idx, col, 0))
+                                    has_action_dict[(idx, col)] = True
+                        elif (abs(x[0] - x[1]) == (goal_sum or goal_sum + 1))  and (x[1] > 0):
+                            for col in range(n):
+                                if board.get_number(idx, col) == 2:
+                                    actions.append((idx, col, 1))
+                                    has_action_dict[(idx, col)] = True
             
             sums = board.board_line_sum_without_number_two()      
             if (n % 2 == 0):
@@ -255,14 +264,23 @@ class Takuzu(Problem):
         board = state.board
         n = board.shape
         actions = sum_check(board, n[0], actions, has_action_dict)
-        # # actions = sum_check_transpose()
+        transpose_actions = []
+        transpose_has_action_dict = {}
+        transpose_actions = sum_check(board.transpose(), n[0], transpose_actions, transpose_has_action_dict)
+        for (idx, i) in enumerate(transpose_actions):
+            transpose_actions[idx] = (i[1], i[0], i[2])
+        actions += transpose_actions
+        transposed_transpose_has_action_dict = {}
+        for i in transpose_has_action_dict:
+            transposed_transpose_has_action_dict[(i[1], i[0])] = True
+        has_action_dict.update(transposed_transpose_has_action_dict)
         actions = filter_actions_1(board, n, actions, has_action_dict)
         for i in range(n[0]):
             for j in range(n[1]):
                 if (i, j) not in has_action_dict and board.get_number(i, j) == 2:
                     actions.append((i, j, 0))
                     actions.append((i, j, 1))
-        # # print(has_action_dict)
+        # # print("has_action_dict", has_action_dict)
         # # print(actions)
         return actions
 
@@ -453,7 +471,8 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         # Criar uma instância de Takuzu:
         problem = Takuzu(board)
         # Obter o nó solução usando a procura em profundidade:
-        goal_node = depth_first_graph_search(problem)
+        # # goal_node = depth_first_graph_search(problem)
+        goal_node = greedy_search(problem, problem.h)
         # Verificar se foi atingida a solução
 
         test_output = str("Is goal?" + str(problem.goal_test(goal_node.state))) + "\n"
