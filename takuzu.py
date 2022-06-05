@@ -167,7 +167,6 @@ class Takuzu(Problem):
                                 for col in range(n):
                                     if (idx, col, 1) in actions:
                                         actions.remove((idx, col, 0))
-
             board2 = board.strip_twos()
             sums = board2.board_matrix.sum(axis=1)      
             if (n % 2 == 0):
@@ -238,8 +237,7 @@ class Takuzu(Problem):
         actions = sum_check(board, n[0], actions)
         if actions == []:
             return []
-               
-        print(actions)
+        
         return actions
 
     def result(self, state: TakuzuState, action):
