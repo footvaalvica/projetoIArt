@@ -156,120 +156,104 @@ class Takuzu(Problem):
         # TODO join all loops into giga mega loop
         # TODO skip over rows and columns that are already completely filled
 
-        def final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = True):
-            final_list = []
-            for idx, x in enumerate(sums):
-                final_list.append((x, board.unfilled_squares_by_row[idx]))
-            # TODO ines o codigo dos pares e impares é quase igual, vê se dá para ficar mais limpo
-            # TODO iteracao pela final list podia ser removida ig
-            if even:
-                for idx, x in enumerate(final_list):
-                    if x[0] == goal_sum and x[1] > 0:
-                        for col in range(n):
-                            if board.get_number(idx, col) == 2:
-                                actions.append((idx, col, 0))
-                                has_action_dict[(idx, col)] = True
-                    elif (abs(x[0] - x[1]) == goal_sum) and (x[1] > 0):
-                        for col in range(n):
-                            if board.get_number(idx, col) == 2:
-                                actions.append((idx, col, 1))
-                                has_action_dict[(idx, col)] = True
-        
-            else:
-                for idx, x in enumerate(final_list):
-                    if (x[0] == (goal_sum or goal_sum + 1)) and x[1] > 0:
-                        for col in range(n):
-                            if board.get_number(idx, col) == 2:
-                                actions.append((idx, col, 0))
-                                has_action_dict[(idx, col)] = True
-                    elif (abs(x[0] - x[1]) == (goal_sum or goal_sum + 1))  and (x[1] > 0):
-                        for col in range(n):
-                            if board.get_number(idx, col) == 2:
-                                actions.append((idx, col, 1))
-                                has_action_dict[(idx, col)] = True
-
+        def filter_actions_1(num, nbelow, nabove, nleft, nright, row, col, actions, has_action_dict):
+            reverse = {0: 1, 1: 0}
+            if num != 2:
+                if (nbelow == num) and (nabove == 2):
+                    if (row - 1, col) not in has_action_dict:
+                        actions.append((row - 1, col, reverse[num]))
+                        has_action_dict[(row - 1, col)] = True
+                if (nabove == num) and (nbelow == 2):
+                    if (row + 1, col) not in has_action_dict:
+                        actions.append((row + 1, col, reverse[num]))
+                        has_action_dict[(row + 1, col)] = True
+                if (nleft == num) and (nright == 2):
+                    if (row, col + 1) not in has_action_dict:
+                        actions.append((row, col + 1, reverse[num]))
+                        has_action_dict[(row, col + 1)] = True
+                if (nright == num) and (nleft == 2):
+                    if (row, col - 1) not in has_action_dict:
+                        actions.append((row, col - 1, reverse[num]))
+                        has_action_dict[(row, col - 1)] = True
+                if num == 2:
+                    if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
+                        if (row, col) not in has_action_dict:
+                            actions.append((row, col, reverse[nbelow]))
+                            has_action_dict[(row, col)] = True
+                    elif (nleft == nright) and (nleft !=2 and nright != 2):
+                        if (row, col) not in has_action_dict:
+                            actions.append((row, col, reverse[nleft]))
+                            has_action_dict[(row, col)] = True
             return actions, has_action_dict
 
-        def filter_actions_1(board: Board, n, actions, has_action_dict):
-            reverse = {0: 1, 1: 0}
-            for row in range(n[0]):
-                for col in range(n[1]):
+        def sums_func(n: int, actions, has_action_dict):
+            def final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = True):
+                # TODO iteracao pela final list podia ser removida ig
+                final_list = []
+                for idx, x in enumerate(sums):
+                    final_list.append((x, board.unfilled_squares_by_row[idx]))
+                for idx, x in enumerate(final_list):
+                    if (x[0] == (goal_sum or goal_sum + (not even))) and x[1] > 0:
+                        for col in range(n):
+                            if board.get_number(idx, col) == 2:
+                                actions.append((idx, col, 0))
+                                has_action_dict[(idx, col)] = True
+                    elif (abs(x[0] - x[1]) == (goal_sum or goal_sum + (not even)))  and (x[1] > 0):
+                        for col in range(n):
+                            if board.get_number(idx, col) == 2:
+                                actions.append((idx, col, 1))
+                                has_action_dict[(idx, col)] = True
+                return actions, has_action_dict
+            
+            sums = []
+            for row in range(n):
+                sums.append(0)
+                for col in range(n):
                     num = board.get_number(row, col)
-                    nbelow, nabove = board.adjacent_vertical_numbers(row, col)
-                    nleft, nright = board.adjacent_horizontal_numbers(row, col)
-                    if num != 2:
-                        if (nbelow == num) and (nabove == 2):
-                            if (row - 1, col) not in has_action_dict:
-                                actions.append((row - 1, col, reverse[num]))
-                                has_action_dict[(row - 1, col)] = True
-                            else:
-                                pass
-                        if (nabove == num) and (nbelow == 2):
-                            if (row + 1, col) not in has_action_dict:
-                                actions.append((row + 1, col, reverse[num]))
-                                has_action_dict[(row + 1, col)] = True
-                            else:
-                                pass
-                        if (nleft == num) and (nright == 2):
-                            if (row, col + 1) not in has_action_dict:
-                                actions.append((row, col + 1, reverse[num]))
-                                has_action_dict[(row, col + 1)] = True
-                            else:
-                               pass
-                        if (nright == num) and (nleft == 2):
-                            if (row, col - 1) not in has_action_dict:
-                                actions.append((row, col - 1, reverse[num]))
-                                has_action_dict[(row, col - 1)] = True
-                            else:
-                                pass
                     if num == 2:
-                        if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
-                            if (row, col) not in has_action_dict:
-                                actions.append((row, col, reverse[nbelow]))
-                                has_action_dict[(row, col)] = True
-                            else:
-                                pass
-                        elif (nleft == nright) and (nleft !=2 and nright != 2):
-                            if (row, col) not in has_action_dict:
-                                actions.append((row, col, reverse[nleft]))
-                                has_action_dict[(row, col)] = True
-                            else:
-                                pass
-            return actions
-
-        def sums_func(n, sums, actions, has_action_dict):
+                        sums[row] += num
+            
             goal_sum = n // 2
             # TODO ines pares ou impares quase iguais, mudar
             if (n % 2 == 0):
                 for i in sums:
                     if i > goal_sum:
-                        return []
+                        return [], has_action_dict
                     else:
-                        final_list_generator(sums, actions, has_action_dict, goal_sum, n)
-                        return actions, has_action_dict
+                        return final_list_generator(sums, actions, has_action_dict, goal_sum, n)
             else:
                 for i in sums:
                     if i >= goal_sum:
-                        return []
-                else:
-                    final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = False)
-                    return actions, has_action_dict
-
-        def all_the_things(actions, has_action_dict, board, n):
-            sums = []
-            for row in range(n[0]):
-                sums.append(0)
-                for col in range(n[1]):
-                    if board.get_number(row, col) != 2:
-                        sums[row] += board.get_number(row, col)
-                    actions, has_action_dict = sums_func(n[0], sums, actions, has_action_dict)
-            return actions, has_action_dict
+                        return [], has_action_dict
+                    else:
+                        return final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = False)
+        
+        def filter_loop(actions, has_action_dict):
+            for row in range(n):
+                for col in range(n):
+                    num = board.get_number(row, col)
+                    print(row, col, num)
+                    nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+                    nleft, nright = board.adjacent_horizontal_numbers(row, col)
+                    actions, has_action_dict = filter_actions_1(num, nbelow, nabove, nleft, nright, row, col, actions, has_action_dict)
+                    if (row, col) not in has_action_dict and num == 2:
+                        actions.append((row, col, 0))
+                        actions.append((row, col, 1))
+        
         actions = []
         self.has_action_dict = {}
         has_action_dict = self.has_action_dict
         board = state.board
-        n = board.shape
-        actions, has_action_dict = all_the_things(actions, has_action_dict, board, n)
+        n = board.shape[0]
+        
+        actions, has_action_dict = sums_func(n, actions, has_action_dict)
+
+        print('actions 1', actions)
+        print('has_action_dict 1', has_action_dict)
+
+        actions, has_action_dict = filter_loop(actions, has_action_dict)
+        
+
         # # transpose_actions = []
         # # transpose_has_action_dict = {}
         # # transpose_actions = sum_check(board.transpose(), n[0], transpose_actions, transpose_has_action_dict)
@@ -280,14 +264,10 @@ class Takuzu(Problem):
         # # for i in transpose_has_action_dict:
         # #     transposed_transpose_has_action_dict[(i[1], i[0])] = True
         # # has_action_dict.update(transposed_transpose_has_action_dict)
-        actions = filter_actions_1(board, n, actions, has_action_dict)
-        for i in range(n[0]):
-            for j in range(n[1]):
-                if (i, j) not in has_action_dict and board.get_number(i, j) == 2:
-                    actions.append((i, j, 0))
-                    actions.append((i, j, 1))
+
         # # print("has_action_dict", has_action_dict)
         # # print(actions)
+        print('actions 2', actions)
         return actions
 
     def result(self, state: TakuzuState, action):
