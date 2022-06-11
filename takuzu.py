@@ -156,8 +156,11 @@ class Takuzu(Problem):
         # TODO join all loops into giga mega loop
         # TODO skip over rows and columns that are already completely filled
 
-        def filter_actions_1(num, nbelow, nabove, nleft, nright, row, col, actions, has_action_dict):
+        def filter_actions_1(num, row, col, has_action_dict: dict):
+            actions = []
             reverse = {0: 1, 1: 0}
+            nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+            nleft, nright = board.adjacent_horizontal_numbers(row, col)
             if num != 2:
                 if (nbelow == num) and (nabove == 2):
                     if (row - 1, col) not in has_action_dict:
@@ -175,16 +178,16 @@ class Takuzu(Problem):
                     if (row, col - 1) not in has_action_dict:
                         actions.append((row, col - 1, reverse[num]))
                         has_action_dict[(row, col - 1)] = True
-                if num == 2:
-                    if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
-                        if (row, col) not in has_action_dict:
-                            actions.append((row, col, reverse[nbelow]))
-                            has_action_dict[(row, col)] = True
-                    elif (nleft == nright) and (nleft !=2 and nright != 2):
-                        if (row, col) not in has_action_dict:
-                            actions.append((row, col, reverse[nleft]))
-                            has_action_dict[(row, col)] = True
-            return actions, has_action_dict
+            else:
+                if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
+                    if (row, col) not in has_action_dict:
+                        actions.append((row, col, reverse[nbelow]))
+                        has_action_dict[(row, col)] = True
+                elif (nleft == nright) and (nleft !=2 and nright != 2):
+                    if (row, col) not in has_action_dict:
+                        actions.append((row, col, reverse[nleft]))
+                        has_action_dict[(row, col)] = True
+            return actions
 
         def sums_func(n: int, actions, has_action_dict):
             def final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = True):
@@ -228,32 +231,26 @@ class Takuzu(Problem):
                     else:
                         return final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = False)
         
-        def filter_loop(actions, has_action_dict):
+        def filter_loop(has_action_dict):
+            actions = []
             for row in range(n):
                 for col in range(n):
                     num = board.get_number(row, col)
-                    print(row, col, num)
-                    nbelow, nabove = board.adjacent_vertical_numbers(row, col)
-                    nleft, nright = board.adjacent_horizontal_numbers(row, col)
-                    actions, has_action_dict = filter_actions_1(num, nbelow, nabove, nleft, nright, row, col, actions, has_action_dict)
+                    actions.extend(filter_actions_1(num, row, col, has_action_dict))
+                    # # print("filter_loop", has_action_dict)
                     if (row, col) not in has_action_dict and num == 2:
                         actions.append((row, col, 0))
                         actions.append((row, col, 1))
+            return actions
         
         actions = []
         self.has_action_dict = {}
-        has_action_dict = self.has_action_dict
         board = state.board
         n = board.shape[0]
         
-        actions, has_action_dict = sums_func(n, actions, has_action_dict)
-
-        print('actions 1', actions)
-        print('has_action_dict 1', has_action_dict)
-
-        actions, has_action_dict = filter_loop(actions, has_action_dict)
+        sums_func(n, actions, self.has_action_dict)
+        actions.extend(filter_loop(self.has_action_dict))
         
-
         # # transpose_actions = []
         # # transpose_has_action_dict = {}
         # # transpose_actions = sum_check(board.transpose(), n[0], transpose_actions, transpose_has_action_dict)
@@ -265,9 +262,6 @@ class Takuzu(Problem):
         # #     transposed_transpose_has_action_dict[(i[1], i[0])] = True
         # # has_action_dict.update(transposed_transpose_has_action_dict)
 
-        # # print("has_action_dict", has_action_dict)
-        # # print(actions)
-        print('actions 2', actions)
         return actions
 
     def result(self, state: TakuzuState, action):
@@ -457,8 +451,8 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         # Criar uma instância de Takuzu:
         problem = Takuzu(board)
         # Obter o nó solução usando a procura em profundidade:
-        # # goal_node = depth_first_graph_search(problem)
-        goal_node = greedy_search(problem, problem.h)
+        goal_node = depth_first_graph_search(problem)
+        # # goal_node = greedy_search(problem, problem.h)
         # Verificar se foi atingida a solução
 
         test_output = str("Is goal?" + str(problem.goal_test(goal_node.state))) + "\n"
