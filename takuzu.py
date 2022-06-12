@@ -26,12 +26,12 @@ from search import (
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
 
-    def __init__(self, board, unfilled_squares, unfilled_squares_by_row):
+    def __init__(self, board, unfilled_squares, unfilled_squares_by_row, unfilled_squares_by_col):
         self.board_matrix = board
         self.shape = board.shape
         self.unfilled_squares = unfilled_squares
         self.unfilled_squares_by_row = unfilled_squares_by_row
-        self.filled_squares = ()
+        self.unfilled_squares_by_col = unfilled_squares_by_col
 
     def __str__(self):
         """Devolve a representação do tabuleiro."""
@@ -43,12 +43,6 @@ class Board:
             string += "\n"
         return string
 
-    def set_filled_tuple(self, row: int, col: int):
-        self.filled_squares = self.filled_squares + ((row, col),)
-
-    def get_filled_tuple(self):
-        return self.filled_squares
-
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.board_matrix[row, col]
@@ -58,8 +52,10 @@ class Board:
         new_board = self.board_matrix.copy()
         unfilled_squares_by_row = self.unfilled_squares_by_row.copy()
         unfilled_squares_by_row[row] = unfilled_squares_by_row[row] - 1
+        unfilled_squares_by_col = self.unfilled_squares_by_col.copy()
+        unfilled_squares_by_col[col] = unfilled_squares_by_col[col] - 1
         new_board[row, col] = value
-        return Board(new_board, self.unfilled_squares - 1, unfilled_squares_by_row)
+        return Board(new_board, self.unfilled_squares - 1, unfilled_squares_by_row, unfilled_squares_by_col)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -96,7 +92,7 @@ class Board:
             for j in range(self.shape[1]):
                 if board_matrix[i, j] == 2:
                     board_matrix[i, j] = 0
-        return Board(board_matrix, self.unfilled_squares, self.unfilled_squares_by_row)
+        return Board(board_matrix, self.unfilled_squares, self.unfilled_squares_by_row, self.unfilled_squares_by_col)
 
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
@@ -104,6 +100,7 @@ class Board:
             np.transpose(self.board_matrix),
             self.unfilled_squares,
             self.unfilled_squares_by_row,
+            self.unfilled_squares_by_col
         )
 
     @staticmethod
@@ -118,6 +115,7 @@ class Board:
 
         unfilled_squares = 0
         unfilled_squares_by_row = []
+        unfilled_squares_by_col = []
 
         if goal_test == True:
             test = stdin.readlines()
@@ -134,7 +132,13 @@ class Board:
                 list_line[list_line.index(i)] = int(i)
             test[idx] = list_line
         board = np.array(test)
-        return Board(board, unfilled_squares, unfilled_squares_by_row)
+        board2 = board.transpose()
+        for i in range(board2.shape[0]):
+            unfilled_squares_by_col.append(0)
+            for j in range(board2.shape[0]):
+                if board2[i, j] == 2:
+                    unfilled_squares_by_col[i] += 1
+        return Board(board, unfilled_squares, unfilled_squares_by_row, unfilled_squares_by_col)
 
     # TODO: outros metodos da classe
 
@@ -158,79 +162,113 @@ class Takuzu(Problem):
         """O construtor especifica o estado inicial."""
         # TODO
         self.initial = TakuzuState(board)
+        self.filled_length = 0
+
+    def final_list_generator(
+        self, board, sums: list, n: int, filled, actions: list, odd: bool = False
+    ):
+        goal_sum = n // 2
+        final_list = []
+        for idx, x in enumerate(sums):
+            final_list.append((x, board.unfilled_squares_by_row[idx]))
+        for idx, x in enumerate(final_list):
+            if (x[0] == (goal_sum or goal_sum + odd)) and x[1] > 0:
+                for col in range(n):
+                    if (idx, col) not in filled and board.get_number(idx, col) == 2:
+                        actions.append((idx, col, 0))
+                        filled.append((idx, col))
+                        self.filled_length += 1
+            elif (x[0] - x[1] == (goal_sum or goal_sum + odd)) and x[1] > 0:
+                for col in range(n):
+                    if (idx, col) not in filled and board.get_number(idx, col) == 2:
+                        actions.append((idx, col, 1))
+                        filled.append((idx, col))
+                        self.filled_length += 1
+
+    def transpose_final_list_generator(
+        self, board, sums: list, n: int, filled, actions: list, odd: bool = False
+    ):
+        goal_sum = n // 2
+        final_list = []
+        for idx, x in enumerate(sums):
+            final_list.append((x, board.unfilled_squares_by_col[idx]))
+        for idx, x in enumerate(final_list):
+            if (x[0] == (goal_sum or goal_sum + odd)) and x[1] > 0:
+                for col in range(n):
+                    if (col, idx) not in filled and board.get_number(col, idx) == 2:
+                        actions.append((col, idx, 0))
+                        filled.append((col, idx))
+                        self.filled_length += 1
+            elif ((x[0] - x[1]) == (goal_sum or goal_sum + odd)) and x[1] > 0:
+                for col in range(n):
+                    if board.get_number(col, idx) == 2 and (col, idx) not in filled:
+                        actions.append((col, idx, 1))
+                        filled.append((col, idx))
+                        self.filled_length += 1
+
+    def sum_check(self, board, n, filled, actions: list):
+        board2 = board.strip_twos()
+        sums = board2.board_matrix.sum(axis=1)
+        sums_t = board2.board_matrix.sum(axis=0)
+        # TODO join the two functions into one
+        if n[0] % 2 == 0:
+            self.final_list_generator(board, sums, n[0], filled, actions)
+            self.transpose_final_list_generator(board, sums_t, n[0], filled, actions)
+        else:
+            self.final_list_generator(board, sums, n[0], filled, actions, odd=True)
+            self.transpose_final_list_generator(board, sums_t, n[0], filled, actions, odd=True)
+
+    def filter_actions_1(self, board: Board, n, filled, actions):
+        reverse = {0: 1, 1: 0}
+        for row in range(n[0]):
+            for col in range(n[1]):
+                num = board.get_number(row, col)
+                nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+                nleft, nright = board.adjacent_horizontal_numbers(row, col)
+                if num != 2:
+                    if (nbelow == num) and (nabove == 2):
+                        actions.append((row - 1, col, reverse[num]))
+                        filled.append((row - 1, col))
+                        self.filled_length += 1
+                    if (nabove == num) and (nbelow == 2):
+                        actions.append((row + 1, col, reverse[num]))
+                        filled.append((row + 1, col))
+                        self.filled_length += 1
+                    if (nleft == num) and (nright == 2):
+                        actions.append((row, col + 1, reverse[num]))
+                        filled.append((row, col + 1))
+                        self.filled_length += 1
+                    if (nright == num) and (nleft == 2):
+                        actions.append((row, col - 1, reverse[num]))
+                        filled.append((row, col - 1))
+                        self.filled_length += 1
+                else:
+                    if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
+                        actions.append((row, col, reverse[nbelow]))
+                        filled.append((row, col))
+                        self.filled_length += 1
+
+                    elif (nleft == nright) and (nleft != 2 and nright != 2):
+                        actions.append((row, col, reverse[nleft]))
+                        filled.append((row, col))
+                        self.filled_length += 1
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
 
-        def sum_check(board, n, actions):
-            def final_list_generator(sums, actions, odd: bool = False):
-                final_list = []
-                for idx, x in enumerate(sums):
-                    final_list.append((x, board.unfilled_squares_by_row[idx]))
-                for idx, x in enumerate(final_list):
-                    if (x[0] == (goal_sum or goal_sum + odd)) and x[1] > 0:
-                        for col in range(n):
-                            if (idx, col, 1) in actions:
-                                actions.remove((idx, col, 1))
-                            elif (x[0] - x[1] == (goal_sum or goal_sum + odd)) and x[
-                                1
-                            ] > 0:
-                                for col in range(n):
-                                    if (idx, col, 1) in actions:
-                                        actions.remove((idx, col, 0))
-
-            board2 = board.strip_twos()
-            sums = board2.board_matrix.sum(axis=1)
-            goal_sum = n // 2
-            if n % 2 == 0:
-                final_list_generator(sums, actions)
-                return actions
-            else:
-                final_list_generator(sums, actions, odd=True)
-                return actions
-
-        def filter_actions_1(board: Board, n, actions):
-            for row in range(n[0]):
-                for col in range(n[1]):
-                    num = board.get_number(row, col)
-                    nbelow, nabove = board.adjacent_vertical_numbers(row, col)
-                    nleft, nright = board.adjacent_horizontal_numbers(row, col)
-                    if num != 2:
-                        if (nbelow == num) and (nabove == 2):
-                            actions.append((row - 1, col, not (num)))
-                            board.set_filled_tuple(row - 1, col)
-                        if (nabove == num) and (nbelow == 2):
-                            actions.append((row + 1, col, not (num)))
-                            board.set_filled_tuple(row + 1, col)
-                        if (nleft == num) and (nright == 2):
-                            actions.append((row, col + 1, not (num)))
-                            board.set_filled_tuple(row, col + 1)
-                        if (nright == num) and (nleft == 2):
-                            actions.append((row, col - 1, not (num)))
-                            board.set_filled_tuple(row, col - 1)
-                    else:
-                        if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
-                            actions.append((row, col, not (num)))
-                            board.set_filled_tuple(row, col)
-                        if (nleft == nright) and (nleft != 2 and nright != 2):
-                            actions.append((row, col, not (num)))
-                            board.set_filled_tuple(row, col)
-            return actions
-
         actions = []
         board = state.board
         n = board.shape
-        actions = filter_actions_1(board, n, actions)
-        filled = board.get_filled_tuple()
+        filled = []
+        self.filter_actions_1(board, n, filled, actions)
+        self.sum_check(board, n, filled, actions)
         for row in range(n[0]):
             for col in range(n[1]):
                 num = board.get_number(row, col)
-                if num == 2:
-                    if (row, col) not in filled:
-                        actions.append((row, col, 0))
-                        actions.append((row, col, 1))
-        actions = sum_check(board, n[0], actions)
+                if num == 2 and (row, col) not in filled:
+                    actions.append((row, col, 0))
+                    actions.append((row, col, 1))
         return actions
 
     def result(self, state: TakuzuState, action):
@@ -308,13 +346,15 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        # todo improve
-        return node.state.board.unfilled_squares
+        return node.state.board.unfilled_squares - self.filled_length
 
     # TODO: outros metodos da classe
+
 
 if __name__ == "__main__":
     board = Board.parse_instance_from_stdin()
     problem = Takuzu(board)
-    goal_node = depth_first_tree_search(problem)
+    # solve easy problems then use search
+    # # problem.easy_solve()
+    goal_node = greedy_search(problem, problem.h)
     print(goal_node.state.board)
