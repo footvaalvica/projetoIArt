@@ -21,14 +21,16 @@ from search import (
 )
 from utils import name
 
+
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
+
     def __init__(self, board, unfilled_squares, unfilled_squares_by_row):
         self.board_matrix = board
         self.shape = board.shape
         self.unfilled_squares = unfilled_squares
         self.unfilled_squares_by_row = unfilled_squares_by_row
-        
+
         # TODO ines faz isto
         # # self.unfilled_squares_by_col = unfilled_squares_by_col
 
@@ -58,12 +60,12 @@ class Board:
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
         n = self.shape
-        if n[0] > row+1:
-            nbelow = self.board_matrix[row+1, col]
+        if n[0] > row + 1:
+            nbelow = self.board_matrix[row + 1, col]
         else:
             nbelow = None
-        if row+1 != 1:
-            nabove = self.board_matrix[row-1, col]
+        if row + 1 != 1:
+            nabove = self.board_matrix[row - 1, col]
         else:
             nabove = None
         return (nbelow, nabove)
@@ -72,15 +74,15 @@ class Board:
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
         n = self.shape
-        if n[1] > col+1:
-            nright = self.board_matrix[row, col+1]
+        if n[1] > col + 1:
+            nright = self.board_matrix[row, col + 1]
         else:
             nright = None
-        if col+1 != 1:
-            nleft = self.board_matrix[row, col-1]
+        if col + 1 != 1:
+            nleft = self.board_matrix[row, col - 1]
         else:
             nleft = None
-        
+
         return (nleft, nright)
 
     def board_line_sum_without_number_two(self) -> list:
@@ -96,7 +98,11 @@ class Board:
 
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
-        return Board(np.transpose(self.board_matrix), self.unfilled_squares, self.unfilled_squares_by_row)
+        return Board(
+            np.transpose(self.board_matrix),
+            self.unfilled_squares,
+            self.unfilled_squares_by_row,
+        )
 
     @staticmethod
     def parse_instance_from_stdin(goal_test: bool = False):
@@ -107,17 +113,17 @@ class Board:
             > from sys import stdin
             > stdin.readline()
         """
-        
+
         unfilled_squares = 0
         unfilled_squares_by_row = []
 
         if goal_test == True:
             test = sys.stdin.readlines()
-        else: 
+        else:
             test = sys.stdin.readlines()[1:]
         for idx, x in enumerate(test):
-            x = x[0:len(x)-1]
-            list_line = x.split('\t')
+            x = x[0 : len(x) - 1]
+            list_line = x.split("\t")
             unfilled_squares_by_row.append(0)
             for i in list_line:
                 if int(i) == 2:
@@ -129,6 +135,7 @@ class Board:
         return Board(board, unfilled_squares, unfilled_squares_by_row)
 
     # TODO: outros metodos da classe
+
 
 class TakuzuState:
     state_id = 0
@@ -143,12 +150,34 @@ class TakuzuState:
 
     # TODO: outros metodos da classe
 
+
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
         # TODO
         self.initial = TakuzuState(board)
         self.has_action_dict = {}
+
+    def final_list_generator(sums, has_action_dict, goal_sum, n, even=True):
+        actions = []
+        # TODO iteracao pela final list podia ser removida ig
+        final_list = []
+        for idx, x in enumerate(sums):
+            final_list.append((x, board.unfilled_squares_by_row[idx]))
+        for idx, x in enumerate(final_list):
+            if (x[0] == (goal_sum or goal_sum + (not even))) and x[1] > 0:
+                for col in range(n):
+                    if board.get_number(idx, col) == 2:
+                        actions.append((idx, col, 0))
+                        has_action_dict[(idx, col)] = True
+            elif (abs(x[0] - x[1]) == (goal_sum or goal_sum + (not even))) and (
+                x[1] > 0
+            ):
+                for col in range(n):
+                    if board.get_number(idx, col) == 2:
+                        actions.append((idx, col, 1))
+                        has_action_dict[(idx, col)] = True
+        return actions
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
@@ -183,31 +212,13 @@ class Takuzu(Problem):
                     if (row, col) not in has_action_dict:
                         actions.append((row, col, reverse[nbelow]))
                         has_action_dict[(row, col)] = True
-                elif (nleft == nright) and (nleft !=2 and nright != 2):
+                elif (nleft == nright) and (nleft != 2 and nright != 2):
                     if (row, col) not in has_action_dict:
                         actions.append((row, col, reverse[nleft]))
                         has_action_dict[(row, col)] = True
             return actions
 
-        def sums_func(n: int, actions, has_action_dict):
-            def final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = True):
-                # TODO iteracao pela final list podia ser removida ig
-                final_list = []
-                for idx, x in enumerate(sums):
-                    final_list.append((x, board.unfilled_squares_by_row[idx]))
-                for idx, x in enumerate(final_list):
-                    if (x[0] == (goal_sum or goal_sum + (not even))) and x[1] > 0:
-                        for col in range(n):
-                            if board.get_number(idx, col) == 2:
-                                actions.append((idx, col, 0))
-                                has_action_dict[(idx, col)] = True
-                    elif (abs(x[0] - x[1]) == (goal_sum or goal_sum + (not even)))  and (x[1] > 0):
-                        for col in range(n):
-                            if board.get_number(idx, col) == 2:
-                                actions.append((idx, col, 1))
-                                has_action_dict[(idx, col)] = True
-                return actions, has_action_dict
-            
+        def sums_func(n: int, has_action_dict):
             sums = []
             for row in range(n):
                 sums.append(0)
@@ -215,22 +226,18 @@ class Takuzu(Problem):
                     num = board.get_number(row, col)
                     if num == 2:
                         sums[row] += num
-            
+
             goal_sum = n // 2
             # TODO ines pares ou impares quase iguais, mudar
-            if (n % 2 == 0):
-                for i in sums:
-                    if i > goal_sum:
-                        return [], has_action_dict
-                    else:
-                        return final_list_generator(sums, actions, has_action_dict, goal_sum, n)
+            if n % 2 == 0:
+                return Takuzu.final_list_generator(
+                    sums, has_action_dict, goal_sum, n
+                )
             else:
-                for i in sums:
-                    if i >= goal_sum:
-                        return [], has_action_dict
-                    else:
-                        return final_list_generator(sums, actions, has_action_dict, goal_sum, n, even = False)
-        
+                return Takuzu.final_list_generator(
+                    sums, has_action_dict, goal_sum, n, even=False
+                )
+
         def filter_loop(has_action_dict):
             actions = []
             for row in range(n):
@@ -242,15 +249,13 @@ class Takuzu(Problem):
                         actions.append((row, col, 0))
                         actions.append((row, col, 1))
             return actions
-        
-        actions = []
+
         self.has_action_dict = {}
         board = state.board
         n = board.shape[0]
-        
-        sums_func(n, actions, self.has_action_dict)
+        actions = sums_func(n, self.has_action_dict)
         actions.extend(filter_loop(self.has_action_dict))
-        
+
         # # transpose_actions = []
         # # transpose_has_action_dict = {}
         # # transpose_actions = sum_check(board.transpose(), n[0], transpose_actions, transpose_has_action_dict)
@@ -278,17 +283,19 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        #?? nao sei quao importante é otimizar aqui
+        # ?? nao sei quao importante é otimizar aqui
         board = state.board
         if board.unfilled_squares > 0:
             return False
         elif board.unfilled_squares == 0:
             boardt = state.board.transpose()
-            goal_result = (Takuzu.check_more_than_two(board) == True and 
-            Takuzu.check_duplicate_lines(board) == True and 
-            Takuzu.check_duplicate_lines(boardt) == True and 
-            Takuzu.check_numbers(board) == True and
-            Takuzu.check_numbers(boardt) == True)
+            goal_result = (
+                Takuzu.check_more_than_two(board) == True
+                and Takuzu.check_duplicate_lines(board) == True
+                and Takuzu.check_duplicate_lines(boardt) == True
+                and Takuzu.check_numbers(board) == True
+                and Takuzu.check_numbers(boardt) == True
+            )
             return goal_result
 
     @staticmethod
@@ -304,9 +311,9 @@ class Takuzu(Problem):
                 if adj_vertical[0] == num and adj_vertical[1] == num:
                     return False
                 ncol += 1
-            nrow+=1
+            nrow += 1
         return True
-    
+
     @staticmethod
     def check_duplicate_lines(board: Board):
         check = {}
@@ -320,7 +327,7 @@ class Takuzu(Problem):
             check[nrow] = tup
             nrow += 1
         return True
-    
+
     @staticmethod
     def check_numbers(board: Board):
         n = board.shape
@@ -330,7 +337,7 @@ class Takuzu(Problem):
                 if num == 0:
                     zero += 1
                 elif num == 1:
-                    one +=1
+                    one += 1
             if zero != one and (n[0] % 2 == 0 or abs(one - zero) != 1):
                 return False
         return True
@@ -341,11 +348,13 @@ class Takuzu(Problem):
 
     # TODO: outros metodos da classe
 
+
 # TODO finish this class
 class Test:
     """APAGR!!! hahahahahahah
     qnd tiveres a trabalhar no proj colapsa só esta classe, tá feia
     e se quiseres meter mais testes a correr altera o construtor"""
+
     # estas cenas sao kinda inuteis por agora
     test1out = """Initial:\n2\t1\t2\t0\n2\t2\t0\t2\n2\t0\t2\t2\n1\t1\t2\t0\n
 (None, 2)
@@ -357,7 +366,9 @@ class Test:
 1"""
     test3out = """Initial:\n2\t1\t2\t0\n2\t2\t0\t2\n2\t0\t2\t2\n1\t1\t2\t0\n
 Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
-    test4out = """Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
+    test4out = (
+        """Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
+    )
     INITIAL = "Initial:\n"
     # cores
     @staticmethod
@@ -378,7 +389,7 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         # # self.test2(board)
         # # self.test3(board)
         self.test4(board)
-    
+
     @staticmethod
     def test1(board: Board):
         test_output = str(Test.INITIAL + str(board)) + "\n"
@@ -422,7 +433,9 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         problem = Takuzu(board)
         # Criar um estado com a configuração inicial:
         s0 = TakuzuState(board)
-        test_output = str(Test.INITIAL + str(s0.board)) + "\n"       # Aplicar as ações que resolvem a instância
+        test_output = (
+            str(Test.INITIAL + str(s0.board)) + "\n"
+        )  # Aplicar as ações que resolvem a instância
         s1 = problem.result(s0, (0, 0, 0))
         s2 = problem.result(s1, (0, 2, 1))
         s3 = problem.result(s2, (1, 0, 1))
@@ -433,19 +446,19 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         s8 = problem.result(s7, (2, 3, 1))
         s9 = problem.result(s8, (3, 2, 0))
         # Verificar se foi atingida a solução
-        test_output += str("Is goal?" +  str(problem.goal_test(s9))) + "\n"
+        test_output += str("Is goal?" + str(problem.goal_test(s9))) + "\n"
         test_output += str("Solution:\n" + str(s9.board))
 
         if test_output == Test.test3out:
             # print diff between test3out and testoutput
-            
+
             Test.pr_green("Test 3 is nice!")
         else:
             Test.pr_red("Wrong!")
             Test.pr_cyan(Test.test3out)
             # Test.prRed("DIFF" + str([x for x in testOutput if x not in Test.test3out]))
             print(test_output)
-    
+
     @staticmethod
     def test4(board: Board):
         # Criar uma instância de Takuzu:
@@ -456,7 +469,7 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         # Verificar se foi atingida a solução
 
         test_output = str("Is goal?" + str(problem.goal_test(goal_node.state))) + "\n"
-        test_output += ("Solution:\n" + str(goal_node.state.board))
+        test_output += "Solution:\n" + str(goal_node.state.board)
 
         if test_output == Test.test4out:
             Test.pr_green("Nice!\n")
@@ -473,6 +486,7 @@ Is goal?True\nSolution:\n0\t1\t1\t0\n1\t0\t0\t1\n0\t0\t1\t1\n1\t1\t0\t0\n"""
         test_output = str("Is goal? " + str(problem.goal_test(state)))
         print(test_output)
 
+
 if __name__ == "__main__":
     # TODO:
     # Usar uma técnica de procura para resolver a instância,
@@ -481,13 +495,13 @@ if __name__ == "__main__":
 
     #!! nao mexas aqui por enquanto xD
     board = Board.parse_instance_from_stdin()
-    
+
     # problem = Takuzu(board)
     # # Obter o nó solução usando a procura em profundidade:
     # goal_node = depth_first_graph_search(problem)
     # # Verificar se foi atingida a solução
     # testOutput = str("Is goal? " + str(problem.goal_test(goal_node.state))) + "\n"
     # testOutput += ("Solution:\n" + str(goal_node.state.board))
-    
+
     # correr tests
     Test(board)
