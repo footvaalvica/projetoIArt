@@ -6,7 +6,9 @@
 # 99282 Mateus Pinho
 # 99238 Inês Ji
 
-import sys
+from sys import stdin
+
+# # from numpy import array, transpose
 import numpy as np
 from search import (
     Problem,
@@ -118,9 +120,9 @@ class Board:
         unfilled_squares_by_row = []
 
         if goal_test == True:
-            test = sys.stdin.readlines()
+            test = stdin.readlines()
         else:
-            test = sys.stdin.readlines()[1:]
+            test = stdin.readlines()[1:]
         for idx, x in enumerate(test):
             x = x[0 : len(x) - 1]
             list_line = x.split("\t")
@@ -196,23 +198,23 @@ class Takuzu(Problem):
                     nleft, nright = board.adjacent_horizontal_numbers(row, col)
                     if num != 2:
                         if (nbelow == num) and (nabove == 2):
-                            actions.append((row - 1, col, not(num)))
+                            actions.append((row - 1, col, not (num)))
                             board.set_filled_tuple(row - 1, col)
                         if (nabove == num) and (nbelow == 2):
-                            actions.append((row + 1, col, not(num)))
+                            actions.append((row + 1, col, not (num)))
                             board.set_filled_tuple(row + 1, col)
                         if (nleft == num) and (nright == 2):
-                            actions.append((row, col + 1, not(num)))
+                            actions.append((row, col + 1, not (num)))
                             board.set_filled_tuple(row, col + 1)
                         if (nright == num) and (nleft == 2):
-                            actions.append((row, col - 1, not(num)))
+                            actions.append((row, col - 1, not (num)))
                             board.set_filled_tuple(row, col - 1)
                     else:
                         if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
-                            actions.append((row, col, not(num)))
+                            actions.append((row, col, not (num)))
                             board.set_filled_tuple(row, col)
                         if (nleft == nright) and (nleft != 2 and nright != 2):
-                            actions.append((row, col, not(num)))
+                            actions.append((row, col, not (num)))
                             board.set_filled_tuple(row, col)
             return actions
 
@@ -306,7 +308,8 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.unfilled_squares - node.state.board.filled_squares
+        # todo improve
+        return node.state.board.unfilled_squares
 
     # TODO: outros metodos da classe
 
