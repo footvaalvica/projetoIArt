@@ -49,6 +49,21 @@ class Board:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.board_matrix[row, col]
 
+    def deepcopy_set_actions(self, actions):
+        new_board = self.board_matrix.copy()
+        unfilled_squares_by_row = self.unfilled_squares_by_row.copy()
+        unfilled_squares_by_col = self.unfilled_squares_by_col.copy()
+        for i in actions:
+            unfilled_squares_by_row[i[0]] = unfilled_squares_by_row[i[0]] - 1
+            unfilled_squares_by_col[i[1]] = unfilled_squares_by_col[i[1]] - 1
+            new_board[i[0], i[1]] = i[2]
+        return Board(
+            new_board,
+            self.unfilled_squares - len(actions),
+            unfilled_squares_by_row,
+            unfilled_squares_by_col,
+        )
+
     def deepcopy_set_number(self, row: int, col: int, value: int):
         """Copia o tabuleiro e altera o valor na respetiva posição."""
         new_board = self.board_matrix.copy()
@@ -156,17 +171,109 @@ class Board:
         
 class TakuzuState:
     state_id = 0
+    solve_counter = 0
+
+    def final_list_generator(
+        self, board, sums: list, n: int, filled, actions: list, odd: bool = False
+    ):
+        goal_sum = n // 2
+        final_list = []
+        for idx, x in enumerate(sums):
+            final_list.append((x, board.unfilled_squares_by_row[idx]))
+        for idx, x in enumerate(final_list):
+            if (x[0] == (goal_sum or goal_sum + odd)) and x[1] > 0:
+                for col in range(n):
+                    if (idx, col) not in filled and board.get_number(idx, col) == 2:
+                        actions.append((idx, col, 0))
+                        filled[idx, col] = True
+            elif (x[0] - x[1] == (goal_sum or goal_sum + odd)) and x[1] > 0:
+                for col in range(n):
+                    if (idx, col) not in filled and board.get_number(idx, col) == 2:
+                        actions.append((idx, col, 1))
+                        filled[idx, col] = True
+
+
+    def transpose_final_list_generator(
+        self, board, sums: list, n: int, filled, actions: list, odd: bool = False
+    ):
+        goal_sum = n // 2
+        final_list = []
+        for idx, x in enumerate(sums):
+            final_list.append((x, board.unfilled_squares_by_col[idx]))
+        for idx, x in enumerate(final_list):
+            if (x[0] == (goal_sum or goal_sum + odd)) and x[1] > 0:
+                for col in range(n):
+                    if (col, idx) not in filled and board.get_number(col, idx) == 2:
+                        actions.append((col, idx, 0))
+                        filled[col, idx] = True
+
+            elif ((x[0] - x[1]) == (goal_sum or goal_sum + odd)) and x[1] > 0:
+                for col in range(n):
+                    if board.get_number(col, idx) == 2 and (col, idx) not in filled:
+                        actions.append((col, idx, 1))
+                        filled[col, idx] = True
+
+    def sum_check(self, board, n, filled, actions: list):
+        board2 = board.strip_twos()
+        sums = board2.board_matrix.sum(axis=1)
+        sums_t = board2.board_matrix.sum(axis=0)
+        if n[0] % 2 == 0:
+            self.final_list_generator(board, sums, n[0], filled, actions)
+            self.transpose_final_list_generator(board, sums_t, n[0], filled, actions)
+        else:
+            self.final_list_generator(board, sums, n[0], filled, actions, odd=True)
+            self.transpose_final_list_generator(
+                board, sums_t, n[0], filled, actions, odd=True
+            )
+
+    def filter_actions_1(self, board: Board, n, filled, actions):
+        reverse = {0: 1, 1: 0}
+        for row in range(n[0]):
+            for col in range(n[1]):
+                num = board.get_number(row, col)
+                nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+                nleft, nright = board.adjacent_horizontal_numbers(row, col)
+                if num != 2:
+                    if (nbelow == num) and (nabove == 2) and (row - 1, col) not in filled:
+                        actions.append((row - 1, col, reverse[num]))
+                        filled[row - 1, col] = True
+                    if (nabove == num) and (nbelow == 2) and (row + 1, col) not in filled:
+                        actions.append((row + 1, col, reverse[num]))
+                        filled[row + 1, col] = True
+                    if (nleft == num) and (nright == 2) and (row, col + 1) not in filled:
+                        actions.append((row, col + 1, reverse[num]))
+                        filled[row, col + 1] = True
+                    if (nright == num) and (nleft == 2) and (row, col - 1) not in filled:
+                        actions.append((row, col - 1, reverse[num]))
+                        filled[row, col - 1] = True
+                else:
+                    if (nbelow == nabove) and (nbelow != 2 and nabove != 2) and (row, col) not in filled:
+                        actions.append((row, col, reverse[nbelow]))
+                        filled[row, col] = True
+                    elif (nleft == nright) and (nleft != 2 and nright != 2) and (row, col) not in filled:
+                        actions.append((row, col, reverse[nleft]))
+                        filled[row, col] = True
+
+    def easy_solve(self, board: Board):
+        actions = []
+        n = board.shape
+        filled = {}
+        self.filter_actions_1(board, n, filled, actions)
+        self.sum_check(board, n, filled, actions)
+        board = board.deepcopy_set_actions(actions)
+        return board
 
     def __init__(self, board: Board):
-        self.board = board
+        if TakuzuState.solve_counter >= 10:
+            self.board = self.easy_solve(board)
+        else:
+            self.board = board
         self.id = TakuzuState.state_id
         TakuzuState.state_id += 1
+        TakuzuState.solve_counter += 1
 
     def __lt__(self, other):
         return self.id < other.id
-
-    # TODO: outros metodos da classe
-
 
 class Takuzu(Problem):
     def __init__(self, board: Board):
@@ -187,13 +294,13 @@ class Takuzu(Problem):
                 for col in range(n):
                     if (idx, col) not in filled and board.get_number(idx, col) == 2:
                         actions.append((idx, col, 0))
-                        filled.append((idx, col))
+                        filled[idx, col] = True
                         self.filled_length += 1
             elif (x[0] - x[1] == (goal_sum or goal_sum + odd)) and x[1] > 0:
                 for col in range(n):
                     if (idx, col) not in filled and board.get_number(idx, col) == 2:
                         actions.append((idx, col, 1))
-                        filled.append((idx, col))
+                        filled[idx, col] = True
                         self.filled_length += 1
 
     def transpose_final_list_generator(
@@ -208,20 +315,19 @@ class Takuzu(Problem):
                 for col in range(n):
                     if (col, idx) not in filled and board.get_number(col, idx) == 2:
                         actions.append((col, idx, 0))
-                        filled.append((col, idx))
+                        filled[col, idx] = True
                         self.filled_length += 1
             elif ((x[0] - x[1]) == (goal_sum or goal_sum + odd)) and x[1] > 0:
                 for col in range(n):
                     if board.get_number(col, idx) == 2 and (col, idx) not in filled:
                         actions.append((col, idx, 1))
-                        filled.append((col, idx))
+                        filled[col, idx] = True
                         self.filled_length += 1
 
     def sum_check(self, board, n, filled, actions: list):
         board2 = board.strip_twos()
         sums = board2.board_matrix.sum(axis=1)
         sums_t = board2.board_matrix.sum(axis=0)
-        # TODO join the two functions into one
         if n[0] % 2 == 0:
             self.final_list_generator(board, sums, n[0], filled, actions)
             self.transpose_final_list_generator(board, sums_t, n[0], filled, actions)
@@ -239,30 +345,30 @@ class Takuzu(Problem):
                 nbelow, nabove = board.adjacent_vertical_numbers(row, col)
                 nleft, nright = board.adjacent_horizontal_numbers(row, col)
                 if num != 2:
-                    if (nbelow == num) and (nabove == 2):
+                    if (nbelow == num) and (nabove == 2) and (row - 1, col) not in filled:
                         actions.append((row - 1, col, reverse[num]))
-                        filled.append((row - 1, col))
+                        filled[row - 1, col] = True
                         self.filled_length += 1
-                    if (nabove == num) and (nbelow == 2):
+                    if (nabove == num) and (nbelow == 2) and (row + 1, col) not in filled:
                         actions.append((row + 1, col, reverse[num]))
-                        filled.append((row + 1, col))
+                        filled[row + 1, col] = True
                         self.filled_length += 1
-                    if (nleft == num) and (nright == 2):
+                    if (nleft == num) and (nright == 2) and (row, col + 1) not in filled:
                         actions.append((row, col + 1, reverse[num]))
-                        filled.append((row, col + 1))
+                        filled[row, col + 1] = True
                         self.filled_length += 1
-                    if (nright == num) and (nleft == 2):
+                    if (nright == num) and (nleft == 2) and (row, col - 1) not in filled:
                         actions.append((row, col - 1, reverse[num]))
-                        filled.append((row, col - 1))
+                        filled[row, col - 1] = True
                         self.filled_length += 1
                 else:
-                    if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
+                    if (nbelow == nabove) and (nbelow != 2 and nabove != 2) and (row, col) not in filled:
                         actions.append((row, col, reverse[nbelow]))
-                        filled.append((row, col))
+                        filled[row, col] = True
                         self.filled_length += 1
-                    elif (nleft == nright) and (nleft != 2 and nright != 2):
+                    elif (nleft == nright) and (nleft != 2 and nright != 2) and (row, col) not in filled:
                         actions.append((row, col, reverse[nleft]))
-                        filled.append((row, col))
+                        filled[row, col] = True
                         self.filled_length += 1
 
     def actions(self, state: TakuzuState):
@@ -272,7 +378,7 @@ class Takuzu(Problem):
         actions = []
         board = state.board
         n = board.shape
-        filled = []
+        filled = {}
         self.filter_actions_1(board, n, filled, actions)
         self.sum_check(board, n, filled, actions)
         for row in range(n[0]):
