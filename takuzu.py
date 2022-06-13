@@ -153,10 +153,7 @@ class Board:
         return Board(
             board, unfilled_squares, unfilled_squares_by_row, unfilled_squares_by_col
         )
-
-    # TODO: outros metodos da classe
-
-
+        
 class TakuzuState:
     state_id = 0
 
@@ -263,7 +260,6 @@ class Takuzu(Problem):
                         actions.append((row, col, reverse[nbelow]))
                         filled.append((row, col))
                         self.filled_length += 1
-
                     elif (nleft == nright) and (nleft != 2 and nright != 2):
                         actions.append((row, col, reverse[nleft]))
                         filled.append((row, col))
