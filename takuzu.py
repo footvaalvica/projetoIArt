@@ -20,6 +20,7 @@ from search import (
     recursive_best_first_search,
 )
 
+
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
 
@@ -58,6 +59,7 @@ class Board:
         return self.board_matrix[row, col]
 
     def copy_board(self, row: int, col: int, value: int):
+<<<<<<< Updated upstream
         # # board = self.board_matrix
         # # new_board = []
         # # for r in board:
@@ -66,9 +68,25 @@ class Board:
         #         # new_row = new_row + [num]
         #     # new_board = new_board + [new_row]
         # # newb = np.array(new_board)
+=======
+        # board = self.board_matrix
+        # new_board = []
+        # for r in board:
+        # new_row = []
+        # for num in r:
+        # new_row = new_row + [num]
+        # new_board = new_board + [new_row]
+        # newb = np.array(new_board)
+>>>>>>> Stashed changes
         newb = self.board_matrix.copy()
         newb[row, col] = value
         return Board(newb, self.unfilled_squares - 1)
+
+    def copy_board_actions(self, actions: list):
+        newb = self.board_matrix.copy()
+        for action in actions:
+            newb[action[0], action[1]] = action[2]
+        return Board(newb, self.unfilled_squares - len(actions))
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -132,6 +150,7 @@ class Board:
 
     # TODO: outros metodos da classe
 
+<<<<<<< Updated upstream
 def filter_actions_1(board: Board, n, actions):
     reverse = {0: 1, 1: 0}
     for row in range(n[0]):
@@ -222,6 +241,8 @@ def filter_actions_2(board: Board, n, actions):
                     return actions
 
     return actions
+=======
+>>>>>>> Stashed changes
 
 class TakuzuState:
     state_id = 0
@@ -240,7 +261,140 @@ class TakuzuState:
             board = board.copy_board(i[0], i[1], i[2])
         return board
 
+    def filter_actions_1(board: Board, n, filled, actions):
+        reverse = {0: 1, 1: 0}
+        for row in range(n[0]):
+            for col in range(n[1]):
+                num = board.get_number(row, col)
+                nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+                nleft, nright = board.adjacent_horizontal_numbers(row, col)
+                if num != 2:
+                    if (
+                        (nbelow == num)
+                        and (nabove == 2)
+                        and (row - 1, col) not in filled
+                    ):
+                        actions.append((row - 1, col, reverse[num]))
+                        filled[(row - 1, col)] = True
+                    elif (
+                        (nabove == num)
+                        and (nbelow == 2)
+                        and (row + 1, col) not in filled
+                    ):
+                        actions.append((row + 1, col, reverse[num]))
+                        filled[(row + 1, col)] = True
+                    if (
+                        (nleft == num)
+                        and (nright == 2)
+                        and (row, col + 1) not in filled
+                    ):
+                        actions.append((row, col + 1, reverse[num]))
+                        filled[(row, col + 1)] = True
+                    elif (
+                        (nright == num)
+                        and (nleft == 2)
+                        and (row, col - 1) not in filled
+                    ):
+                        actions.append((row, col - 1, reverse[num]))
+                        filled[(row, col - 1)] = True
+                if num == 2:
+                    if (
+                        (nbelow == nabove)
+                        and (nbelow != 2 and nabove != 2)
+                        and (row, col) not in filled
+                    ):
+                        actions.append((row, col, reverse[nbelow]))
+                        filled[(row, col)] = True
+                    elif (
+                        (nleft == nright)
+                        and (nleft != 2 and nright != 2)
+                        and (row, col) not in filled
+                    ):
+                        actions.append((row, col, reverse[nleft]))
+                        filled[(row, col)] = True
+        return actions
+
+    def filter_actions_2(board: Board, n, filled, actions):
+        half_r = n[0] / 2
+        half_c = n[1] / 2
+        for i in range(n[0]):
+            col = board.get_col(i)
+            row = board.get_row(i)
+            blank_col = ()
+            blank_row = ()
+            col_0 = col_1 = row_0 = row_1 = 0
+            for j in range(n[0]):
+                if col[j] == 2:
+                    blank_col = blank_col + ((j, i),)
+                elif col[j] == 1:
+                    col_1 += 1
+                elif col[j] == 0:
+                    col_0 += 1
+                if row[j] == 2:
+                    blank_row = blank_row + ((i, j),)
+                elif row[j] == 1:
+                    row_1 += 1
+                elif row[j] == 0:
+                    row_0 += 1
+            if n[1] % 2 == 0:
+                if row_0 == (half_c) and blank_row != ():
+                    for (row, col) in blank_row:
+                        if (row, col) not in filled:
+                            actions.append((row, col, 1))
+                            filled[(row, col)] = True
+                elif row_1 == (half_c) and blank_row != ():
+                    for (row, col) in blank_row:
+                        if (row, col) not in filled:
+                            actions.append((row, col, 0))
+                            filled[(row, col)] = True
+            else:
+                if row_0 == (half_c + 1) and blank_row != ():
+                    for (row, col) in blank_row:
+                        if (row, col) not in filled:
+                            actions.append((row, col, 1))
+                            filled[(row, col)] = True
+                elif row_1 == (half_c + 1) and blank_row != ():
+                    for (row, col) in blank_row:
+                        if (row, col) not in filled:
+                            actions.append((row, col, 0))
+                            filled[(row, col)] = True
+            if n[0] % 2 == 0:
+                if col_0 == (half_r) and blank_col != ():
+                    for (row, col) in blank_col:
+                        if (row, col) not in filled:
+                            actions.append((row, col, 1))
+                            filled[(row, col)] = True
+                elif col_1 == (half_r) and blank_col != ():
+                    for (row, col) in blank_col:
+                        if (row, col) not in filled:
+                            actions.append((row, col, 0))
+                            filled[(row, col)] = True
+            else:
+                if col_0 == (half_r + 1) and blank_col != ():
+                    for (row, col) in blank_col:
+                        if (row, col) not in filled:
+                            actions.append((row, col, 1))
+                            filled[(row, col)] = True
+                elif col_1 == (half_r + 1) and blank_col != ():
+                    for (row, col) in blank_col:
+                        if (row, col) not in filled:
+                            actions.append((row, col, 0))
+                            filled[(row, col)] = True
+
+        return actions
+
+    def easy_solve(self):
+        filled = {}
+        actions = []
+        board = self.board
+        n = board.shape
+        actions = TakuzuState.filter_actions_1(board, n, filled, actions)
+        actions = TakuzuState.filter_actions_2(board, n, filled, actions)
+        board = board.copy_board_actions(actions)
+        return TakuzuState(board)
+
     def __init__(self, board: Board):
+<<<<<<< Updated upstream
         if TakuzuState.state_id == 0:
             self.board = self.easy_solve(board)
         if TakuzuState.solve_counter == 5:
@@ -249,18 +403,119 @@ class TakuzuState:
         else:
             self.board = board
         self.id = TakuzuState.state_id
+=======
+        self.board = board
+>>>>>>> Stashed changes
         TakuzuState.state_id += 1
         TakuzuState.solve_counter += 1
 
     def __lt__(self, other):
         return self.id < other.id
 
+<<<<<<< Updated upstream
+=======
+
+    # TODO: outros metodos da classe
+
+
+>>>>>>> Stashed changes
 class Takuzu(Problem):
+    counter = 0
+
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
         # TODO
         self.initial = TakuzuState(board)
 
+<<<<<<< Updated upstream
+=======
+    def filter_actions_1(board: Board, n, actions):
+        reverse = {0: 1, 1: 0}
+        for row in range(n[0]):
+            for col in range(n[1]):
+                num = board.get_number(row, col)
+                nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+                nleft, nright = board.adjacent_horizontal_numbers(row, col)
+                if num != 2:
+                    if (nbelow == num) and (nabove == 2):
+                        return [(row - 1, col, reverse[num])]
+                    elif (nabove == num) and (nbelow == 2):
+                        return [(row + 1, col, reverse[num])]
+                    if (nleft == num) and (nright == 2):
+                        return [(row, col + 1, reverse[num])]
+                    elif (nright == num) and (nleft == 2):
+                        return [(row, col - 1, reverse[num])]
+                if num == 2:
+                    if (nbelow == nabove) and (nbelow != 2 and nabove != 2):
+                        actions.append((row, col, reverse[nbelow]))
+                        return actions
+                    elif (nleft == nright) and (nleft != 2 and nright != 2):
+                        actions.append((row, col, reverse[nleft]))
+                        return actions
+        return actions
+
+    def filter_actions_2(board: Board, n, actions):
+        half_r = n[0] / 2
+        half_c = n[1] / 2
+        for i in range(n[0]):
+            col = board.get_col(i)
+            row = board.get_row(i)
+            blank_col = ()
+            blank_row = ()
+            col_0 = col_1 = row_0 = row_1 = 0
+            for j in range(n[0]):
+                if col[j] == 2:
+                    blank_col = blank_col + ((j, i),)
+                elif col[j] == 1:
+                    col_1 += 1
+                elif col[j] == 0:
+                    col_0 += 1
+                if row[j] == 2:
+                    blank_row = blank_row + ((i, j),)
+                elif row[j] == 1:
+                    row_1 += 1
+                elif row[j] == 0:
+                    row_0 += 1
+            if n[1] % 2 == 0:
+                if row_0 == (half_c) and blank_row != ():
+                    for (row, col) in blank_row:
+                        actions.append((row, col, 1))
+                        return actions
+                elif row_1 == (half_c) and blank_row != ():
+                    for (row, col) in blank_row:
+                        actions.append((row, col, 0))
+                        return actions
+            else:
+                if row_0 == (half_c + 1) and blank_row != ():
+                    for (row, col) in blank_row:
+                        actions.append((row, col, 1))
+                        return actions
+                elif row_1 == (half_c + 1) and blank_row != ():
+                    for (row, col) in blank_row:
+                        actions.append((row, col, 0))
+                        return actions
+            if n[0] % 2 == 0:
+                if col_0 == (half_r) and blank_col != ():
+                    for (row, col) in blank_col:
+                        actions.append((row, col, 1))
+                        return actions
+                elif col_1 == (half_r) and blank_col != ():
+                    for (row, col) in blank_col:
+                        actions.append((row, col, 0))
+                        return actions
+            else:
+                if col_0 == (half_r + 1) and blank_col != ():
+                    for (row, col) in blank_col:
+                        actions.append((row, col, 1))
+                        return actions
+                elif col_1 == (half_r + 1) and blank_col != ():
+                    for (row, col) in blank_col:
+                        actions.append((row, col, 0))
+                        return actions
+
+        return actions
+
+>>>>>>> Stashed changes
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
@@ -286,8 +541,16 @@ class Takuzu(Problem):
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        board = state.board.copy_board(action[0], action[1], action[2])
-        return TakuzuState(board)
+        board = state.board
+        if TakuzuState.state_id == 0:
+            return TakuzuState(board).easy_solve()
+        if Takuzu.counter == 5:
+            Takuzu.counter = 0
+            return TakuzuState(board).easy_solve()
+        else:
+            board = board.copy_board(action[0], action[1], action[2])
+            Takuzu.counter += 1
+            return TakuzuState(board)
 
     def goal_test(self, state: TakuzuState):
         """Retorna True se e só se o estado passado como argumento é
