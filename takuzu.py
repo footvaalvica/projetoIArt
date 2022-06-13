@@ -168,7 +168,7 @@ class Board:
         return Board(
             board, unfilled_squares, unfilled_squares_by_row, unfilled_squares_by_col
         )
-        
+
 class TakuzuState:
     state_id = 0
     solve_counter = 0
@@ -264,8 +264,9 @@ class TakuzuState:
         return board
 
     def __init__(self, board: Board):
-        if TakuzuState.solve_counter >= 10:
+        if TakuzuState.solve_counter >= 5:
             self.board = self.easy_solve(board)
+            TakuzuState.solve_counter = 0
         else:
             self.board = board
         self.id = TakuzuState.state_id
