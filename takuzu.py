@@ -26,7 +26,9 @@ from search import (
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
 
-    def __init__(self, board, unfilled_squares, unfilled_squares_by_row, unfilled_squares_by_col):
+    def __init__(
+        self, board, unfilled_squares, unfilled_squares_by_row, unfilled_squares_by_col
+    ):
         self.board_matrix = board
         self.shape = board.shape
         self.unfilled_squares = unfilled_squares
@@ -55,7 +57,12 @@ class Board:
         unfilled_squares_by_col = self.unfilled_squares_by_col.copy()
         unfilled_squares_by_col[col] = unfilled_squares_by_col[col] - 1
         new_board[row, col] = value
-        return Board(new_board, self.unfilled_squares - 1, unfilled_squares_by_row, unfilled_squares_by_col)
+        return Board(
+            new_board,
+            self.unfilled_squares - 1,
+            unfilled_squares_by_row,
+            unfilled_squares_by_col,
+        )
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -92,7 +99,12 @@ class Board:
             for j in range(self.shape[1]):
                 if board_matrix[i, j] == 2:
                     board_matrix[i, j] = 0
-        return Board(board_matrix, self.unfilled_squares, self.unfilled_squares_by_row, self.unfilled_squares_by_col)
+        return Board(
+            board_matrix,
+            self.unfilled_squares,
+            self.unfilled_squares_by_row,
+            self.unfilled_squares_by_col,
+        )
 
     def transpose(self):
         """Devolve a transposição do tabuleiro."""
@@ -100,7 +112,7 @@ class Board:
             np.transpose(self.board_matrix),
             self.unfilled_squares,
             self.unfilled_squares_by_row,
-            self.unfilled_squares_by_col
+            self.unfilled_squares_by_col,
         )
 
     @staticmethod
@@ -138,7 +150,9 @@ class Board:
             for j in range(board2.shape[0]):
                 if board2[i, j] == 2:
                     unfilled_squares_by_col[i] += 1
-        return Board(board, unfilled_squares, unfilled_squares_by_row, unfilled_squares_by_col)
+        return Board(
+            board, unfilled_squares, unfilled_squares_by_row, unfilled_squares_by_col
+        )
 
     # TODO: outros metodos da classe
 
@@ -216,7 +230,9 @@ class Takuzu(Problem):
             self.transpose_final_list_generator(board, sums_t, n[0], filled, actions)
         else:
             self.final_list_generator(board, sums, n[0], filled, actions, odd=True)
-            self.transpose_final_list_generator(board, sums_t, n[0], filled, actions, odd=True)
+            self.transpose_final_list_generator(
+                board, sums_t, n[0], filled, actions, odd=True
+            )
 
     def filter_actions_1(self, board: Board, n, filled, actions):
         reverse = {0: 1, 1: 0}
@@ -348,13 +364,8 @@ class Takuzu(Problem):
         """Função heuristica utilizada para a procura A*."""
         return node.state.board.unfilled_squares - self.filled_length
 
-    # TODO: outros metodos da classe
-
-
 if __name__ == "__main__":
     board = Board.parse_instance_from_stdin()
     problem = Takuzu(board)
-    # solve easy problems then use search
-    # # problem.easy_solve()
-    goal_node = greedy_search(problem, problem.h)
+    goal_node = depth_first_graph_search(problem)
     print(goal_node.state.board)
