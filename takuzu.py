@@ -11,17 +11,21 @@ import numpy as np
 from search import (
     Problem,
     Node,
-    astar_search,
-    breadth_first_tree_search,
-    breadth_first_graph_search,
+    # # astar_search,
+    # # breadth_first_tree_search,
+    # # breadth_first_graph_search,
     depth_first_tree_search,
     depth_first_graph_search,
-    greedy_search,
-    recursive_best_first_search,
+    # # greedy_search,
+    # # recursive_best_first_search,
+    # # depth_limited_search,
+    # # iterative_deepening_search
 )
+
 
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
+
     def __init__(self, board, unfilled_squares):
         self.board_matrix = board
         self.shape = board.shape
@@ -57,14 +61,6 @@ class Board:
         return self.board_matrix[row, col]
 
     def copy_board(self, row: int, col: int, value: int):
-        #board = self.board_matrix
-        #new_board = []
-        #for r in board:
-            #new_row = []
-            #for num in r:
-                #new_row = new_row + [num]
-            #new_board = new_board + [new_row]
-        #newb = np.array(new_board)
         newb = self.board_matrix.copy()
         newb[row, col] = value
         return Board(newb, self.unfilled_squares - 1)
@@ -73,12 +69,12 @@ class Board:
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
         n = self.shape
-        if n[0] > row+1:
-            nbelow = self.board_matrix[row+1, col]
+        if n[0] > row + 1:
+            nbelow = self.board_matrix[row + 1, col]
         else:
             nbelow = None
-        if row+1 != 1:
-            nabove = self.board_matrix[row-1, col]
+        if row + 1 != 1:
+            nabove = self.board_matrix[row - 1, col]
         else:
             nabove = None
         return (nbelow, nabove)
@@ -87,20 +83,24 @@ class Board:
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
         n = self.shape
-        if n[1] > col+1:
-            nright = self.board_matrix[row, col+1]
+        if n[1] > col + 1:
+            nright = self.board_matrix[row, col + 1]
         else:
             nright = None
-        if col+1 != 1:
-            nleft = self.board_matrix[row, col-1]
+        if col + 1 != 1:
+            nleft = self.board_matrix[row, col - 1]
         else:
             nleft = None
-        
         return (nleft, nright)
 
-    def transpose(self):
-        """Devolve a transposição do tabuleiro."""
-        return Board(np.transpose(self.board_matrix), self.unfilled_squares)
+    def empty_positions(self):
+        """Devolve a lista de posições vazias do tabuleiro."""
+        empty_positions = []
+        for i in range(self.shape[0]):
+            for j in range(self.shape[1]):
+                if self.board_matrix[i, j] == 2:
+                    empty_positions.append((i, j))
+        return empty_positions
 
     @staticmethod
     def parse_instance_from_stdin(goal_test: bool = False):
@@ -111,16 +111,15 @@ class Board:
             > from sys import stdin
             > stdin.readline()
         """
-        
         unfilled_squares = 0
 
         if goal_test == True:
             test = sys.stdin.readlines()
-        else: 
+        else:
             test = sys.stdin.readlines()[1:]
         for idx, x in enumerate(test):
-            x = x[0:len(x)-1]
-            list_line = x.split('\t')
+            x = x[0 : len(x) - 1]
+            list_line = x.split("\t")
             for i in list_line:
                 if int(i) == 2:
                     unfilled_squares += 1
@@ -147,118 +146,130 @@ class TakuzuState:
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        # TODO
         self.initial = TakuzuState(board)
-
-    def filter_actions_1(board: Board, n, actions):
-            reverse = {0: 1, 1: 0}
-            for row in range(n[0]):
-                for col in range(n[1]):
-                    num = board.get_number(row, col)
-                    nbelow, nabove = board.adjacent_vertical_numbers(row, col)
-                    nleft, nright = board.adjacent_horizontal_numbers(row, col)
-                    if num != 2:
-                        if (nbelow == num) and (nabove == 2):
-                            actions.append((row-1, col, reverse[num]))
-                            return actions
-                        elif (nabove == num) and (nbelow == 2):
-                            actions.append((row+1, col, reverse[num]))
-                            return actions
-                        if (nleft == num) and (nright == 2):
-                            actions.append((row, col+1, reverse[num]))
-                            return actions
-                        elif (nright == num) and (nleft == 2):
-                            actions.append((row, col-1, reverse[num]))
-                            return actions
-                    if num == 2:
-                        if (nbelow == nabove) and (nbelow !=2 and nabove != 2):
-                            actions.append((row, col, reverse[nbelow]))
-                            return actions
-                        elif (nleft == nright) and (nleft !=2 and nright != 2):
-                            actions.append((row, col, reverse[nleft]))
-                            return actions
-            return actions
-
-    def filter_actions_2(board: Board, n, actions):
-        half_r = n[0]/2
-        half_c = n[1]/2
-        for i in range(n[0]):
-            col = board.get_col(i)
-            row = board.get_row(i)
-            blank_col = ()
-            blank_row = ()
-            col_0 = col_1 = row_0 = row_1 = 0
-            for j in range(n[0]):
-                if col[j] == 2:
-                    blank_col = blank_col + ((j, i),)
-                elif col[j] == 1:
-                    col_1 += 1
-                elif col[j] == 0:
-                    col_0 += 1 
-                if row[j] == 2:
-                    blank_row = blank_row + ((i, j),)
-                elif row[j] == 1:
-                    row_1 += 1
-                elif row[j] == 0:
-                    row_0 += 1
-            if (n[1] % 2 == 0):
-                if row_0 == (half_c) and blank_row != ():
-                    for (row, col) in blank_row:
-                        actions.append((row, col, 1))
-                        return actions
-                elif row_1 == (half_c) and blank_row != ():
-                    for (row, col) in blank_row:
-                        actions.append((row, col, 0))
-                        return actions
-            else:
-                if row_0 == (half_c+1) and blank_row != ():
-                    for (row, col) in blank_row:
-                        actions.append((row, col, 1))
-                        return actions
-                elif row_1 == (half_c+1) and blank_row != ():
-                    for (row, col) in blank_row:
-                        actions.append((row, col, 0))
-                        return actions
-            if (n[0] % 2 == 0):  
-                if col_0 == (half_r) and blank_col != ():
-                    for (row, col) in blank_col:
-                        actions.append((row, col, 1))
-                        return actions
-                elif col_1 == (half_r) and blank_col != ():
-                    for (row, col) in blank_col:
-                        actions.append((row, col, 0))
-                        return actions
-            else:
-                if col_0 == (half_r+1) and blank_col != ():
-                    for (row, col) in blank_col:
-                        actions.append((row, col, 1))
-                        return actions
-                elif col_1 == (half_r+1) and blank_col != ():
-                    for (row, col) in blank_col:
-                        actions.append((row, col, 0))
-                        return actions
-        
-        return actions
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        
-        # only check if there are more than two of the same number in a row
         actions = []
         board = state.board
         n = board.shape
-        actions = Takuzu.filter_actions_1(board, n, actions)
+        to_fill = board.empty_positions()
+        for i in to_fill:
+            actions = Takuzu.correct_number(board, i)
+            if actions != []:
+                return actions
         if actions == []:
-            actions = Takuzu.filter_actions_2(board, n, actions)
-            if actions == []:
-                for row in range(n[0]):
-                    for col in range(n[1]):
-                        num = board.get_number(row, col)
-                        if num == 2:
-                            actions.append((row, col, 0))
-                            actions.append((row, col, 1))
+            for i in to_fill:
+                (row, col) = i
+                try_actions = [(row, col, 0), (row, col, 1)]
+                actions = Takuzu.try_number(board, try_actions)
+                if actions != []:
+                    return actions
         return actions
+
+    def try_number(board: Board, action):
+        lis = []
+        for act in action:
+            new_board = board.copy_board(act[0], act[1], act[2])
+            check = Takuzu.check_number(new_board, act)
+            if check == True:
+                lis.append(act)
+        return lis
+
+    def check_number(board: Board, action):
+        num = board.get_number(action[0], action[1])
+        nbelow, nabove = board.adjacent_vertical_numbers(action[0], action[1])
+        nleft, nright = board.adjacent_horizontal_numbers(action[0], action[1])
+        if (nbelow == num) and (nabove == num):
+            return False
+        if (nleft == num) and (nright == num):
+            return False
+        c = board.get_col(action[1])
+        r = board.get_row(action[0])
+        n = board.shape
+        half = n[0]/2
+        col_0 = col_1 = row_0 = row_1 = 0
+        for i in range (n[0]):
+            if c[i] == 0:
+                col_0 +=1
+            elif c[i] == 1:
+                col_1 +=1
+            if r[i] == 0:
+                row_0 +=1
+            elif r[i] == 1:
+                row_1 +=1
+        if n[0] % 2 == 0:
+            if (col_0 > half) or (row_0 > half) or (col_1 > half) or (row_0 > half):
+                return False
+        else:
+            if (col_0 > half+1) or (row_0 > half+1) or (col_1 > half+1) or (row_0 > half+1):
+                return False
+        return True
+        
+    @staticmethod
+    def correct_number(board: Board, position):
+        (row, col) = position
+        actions = Takuzu.three_in_line(board, row, col)
+        if actions == []:
+            actions = Takuzu.line_numbers(board, row, col)
+        return actions
+    
+    @staticmethod
+    def three_in_line(board: Board, row, col):
+        n = board.shape
+        reverse = {0: 1, 1: 0}
+        nbelow, nabove = board.adjacent_vertical_numbers(row, col)
+        nleft, nright = board.adjacent_horizontal_numbers(row, col)
+        if (nbelow == nabove) and (nbelow !=2):
+            return [(row, col, reverse[nbelow])]
+        elif (nleft == nright) and (nright != 2):
+            return [(row, col, reverse[nleft])]
+        if col+1 != n[0]:
+            nleft2, nright2 = board.adjacent_horizontal_numbers(row, col+1)
+            if (nright2 == nright) and (nright != 2):
+                return[(row, col, reverse[nright])]
+        if col != 0:
+            nleft2, nright2 = board.adjacent_horizontal_numbers(row, col-1)
+            if (nleft2 == nleft) and (nleft != 2):
+                return[(row, col, reverse[nleft])]
+        if row+1 != n[0]:
+            nbelow2, nabove2 = board.adjacent_vertical_numbers(row+1, col)
+            if (nbelow2 == nbelow) and (nbelow !=2):
+                return [(row, col, reverse[nbelow])]
+        if row != 0:
+            nbelow2, nabove2 = board.adjacent_vertical_numbers(row-1, col)
+            if (nabove2 == nabove) and (nabove !=2):
+                return [(row, col, reverse[nabove])]
+        return []
+
+    @staticmethod
+    def line_numbers(board: Board, row, col):
+        c = board.get_col(col)
+        r = board.get_row(row)
+        n = board.shape
+        half = n[0]/2
+        col_0 = col_1 = row_0 = row_1 = 0
+        for i in range (n[0]):
+            if c[i] == 0:
+                col_0 +=1
+            elif c[i] == 1:
+                col_1 +=1
+            if r[i] == 0:
+                row_0 +=1
+            elif r[i] == 1:
+                row_1 +=1
+        if (n[0] % 2 == 0):
+            if row_0 == half or col_0 == half:
+                return [(row, col, 1)]
+            elif row_1 == half or col_1 == half:
+                return [(row, col, 0)]
+        else:
+            if row_0 == (half+1) or col_0 == (half+1):
+                return [(row, col, 1)]
+            elif row_1 == (half+1) or col_1 == (half+1):
+                return [(row, col, 0)]
+        return []
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
@@ -272,45 +283,39 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        #?? nao sei quao importante é otimizar aqui
         board = state.board
         if board.unfilled_squares > 0:
             return False
         elif board.unfilled_squares == 0:
-            boardt = state.board.transpose()
-            goal_result = (Takuzu.check_goal_state(board) == True and 
-            Takuzu.check_goal_state(boardt) == True)
-            return goal_result
-        else:
-            print("Error")
-            
+            return Takuzu.check_goal_state(board) == True
+
     def check_goal_state(board: Board):
+        check_col = {}
+        check_row = {}
         n = board.shape
-        b = board.board_matrix
-        nrow = 0
-        check = {}
-        for row in b:
-            ncol = zero = one = 0
-            tup = ()
-            for num in row:
-                tup = tup + (num,)
-                adj_horizontal = board.adjacent_horizontal_numbers(nrow, ncol)
-                if adj_horizontal[0] == num and adj_horizontal[1] == num:
-                        return False
-                if num == 0:
-                    zero += 1
-                elif num == 1:
-                    one +=1
-                ncol += 1
-            if zero != one:
+        for i in range(n[0]):
+            sumc = sumr = 0
+            col = board.get_col(i)
+            row = board.get_row(i)
+            for j in range(n[0]):
+                sumc+= col[j]
+                sumr+= row[j]
+                adj_horizontal = board.adjacent_horizontal_numbers(i, j)
+                adj_vertical = board.adjacent_vertical_numbers(j, i)
+                if adj_horizontal[0] == row[j] and adj_horizontal[1] == row[j]:
+                    return False
+                if adj_vertical[0] == col[j] and adj_vertical[1] == col[j]:
+                    return False
+            if sumc != (n[0]/2) or sumr != (n[0]/2):
                 if n[0] % 2 == 0:
                     return False
-                elif abs(one - zero) != 1:
+                elif abs(sumc - (n[0]/2)) != 0.5 or abs(sumr - (n[0]/2)) != 0.5:
                     return False
-            if len(check) != 0 and tup in check.values():
-                return False
-            check[nrow+1] = tup
-            nrow +=1
+            if (len(check_row) != 0 and len(check_col) != 0):
+                if col in check_col.values() or row in check_row.values():
+                    return False
+            check_row[i] = row
+            check_col[i] = col
         return True
 
     def h(self, node: Node):
@@ -318,7 +323,6 @@ class Takuzu(Problem):
         return node.state.board.unfilled_squares
 
     # TODO: outros metodos da classe
-
 
 if __name__ == "__main__":
     board = Board.parse_instance_from_stdin()
