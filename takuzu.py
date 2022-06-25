@@ -11,15 +11,11 @@ import numpy as np
 from search import (
     Problem,
     Node,
-    # # astar_search,
-    # # breadth_first_tree_search,
-    # # breadth_first_graph_search,
+    astar_search,
+    breadth_first_tree_search,
     depth_first_tree_search,
-    depth_first_graph_search,
-    # # greedy_search,
-    # # recursive_best_first_search,
-    # # depth_limited_search,
-    # # iterative_deepening_search
+    greedy_search,
+    recursive_best_first_search,
 )
 
 
@@ -128,7 +124,6 @@ class Board:
         board = np.array(test)
         return Board(board, unfilled_squares)
 
-    # TODO: outros metodos da classe
 
 class TakuzuState:
     state_id = 0
@@ -141,7 +136,6 @@ class TakuzuState:
     def __lt__(self, other):
         return self.id < other.id
 
-    # TODO: outros metodos da classe
 
 class Takuzu(Problem):
     def __init__(self, board: Board):
@@ -179,12 +173,29 @@ class Takuzu(Problem):
 
     def check_number(board: Board, action):
         num = board.get_number(action[0], action[1])
+        n = board.shape
         nbelow, nabove = board.adjacent_vertical_numbers(action[0], action[1])
         nleft, nright = board.adjacent_horizontal_numbers(action[0], action[1])
         if (nbelow == num) and (nabove == num):
             return False
         if (nleft == num) and (nright == num):
             return False
+        if (action[1]+1) != n[0]:
+            nleft2, nright2 = board.adjacent_horizontal_numbers(action[0], action[1]+1)
+            if (nright2 == nright) and (nright == num) and (num != 2):
+                return False
+        if action[1] != 0:
+            nleft2, nright2 = board.adjacent_horizontal_numbers(action[0], action[1]-1)
+            if (nleft2 == nleft) and (nleft == num) and (num != 2):
+                return False
+        if (action[0]+1) != n[0]:
+            nbelow2, nabove2 = board.adjacent_vertical_numbers(action[0]+1, action[1])
+            if (nbelow2 == nbelow) and (nbelow == num) and (num != 2):
+                return False
+        if action[0] != 0:
+            nbelow2, nabove2 = board.adjacent_vertical_numbers(action[0]-1, action[1])
+            if (nabove2 == nabove) and (nabove == num) and (num != 2):
+                return False
         c = board.get_col(action[1])
         r = board.get_row(action[0])
         n = board.shape
@@ -200,10 +211,10 @@ class Takuzu(Problem):
             elif r[i] == 1:
                 row_1 +=1
         if n[0] % 2 == 0:
-            if (col_0 > half) or (row_0 > half) or (col_1 > half) or (row_0 > half):
+            if (col_0 > half) or (row_0 > half) or (col_1 > half) or (row_1 > half):
                 return False
         else:
-            if (col_0 > half+1) or (row_0 > half+1) or (col_1 > half+1) or (row_0 > half+1):
+            if (col_0 > half+1) or (row_0 > half+1) or (col_1 > half+1) or (row_1 > half+1):
                 return False
         return True
         
@@ -322,10 +333,9 @@ class Takuzu(Problem):
         """Função heuristica utilizada para a procura A*."""
         return node.state.board.unfilled_squares
 
-    # TODO: outros metodos da classe
 
 if __name__ == "__main__":
     board = Board.parse_instance_from_stdin()
     problem = Takuzu(board)
-    goal_node = depth_first_graph_search(problem)
+    goal_node = depth_first_tree_search(problem)
     print(goal_node.state.board)
